@@ -66,6 +66,8 @@ a { color: var(--text); }
 .check input { accent-color: var(--accent); width: 15px; height: 15px; }
 .side-foot { display: grid; gap: 10px; margin-top: 20px; font-size: var(--fs-small); }
 .side-foot a { color: var(--faint); }
+.backup { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.backup-note { margin: 0 0 2px; color: var(--faint); line-height: 1.45; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { height: 28px; padding: 0 11px; border: 1px solid var(--control); border-radius: 999px; background: none; color: var(--muted); font-size: 13px; cursor: pointer; transition: border-color 150ms, color 150ms; }
@@ -135,8 +137,9 @@ a { color: var(--text); }
 
 .anchors { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
 .anchors:empty { display: none; }
-.anchor { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 4px 0 4px; border-radius: var(--radius-control); background: var(--raised); font-size: 13px; cursor: pointer; border: 1px solid transparent; }
+.anchor { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 4px; border-radius: var(--radius-control); background: var(--raised); font-size: 13px; border: 1px solid transparent; }
 .anchor:hover { border-color: var(--control); }
+.anchor .a-open { display: flex; align-items: center; gap: 8px; height: 100%; padding: 0; border: 0; background: none; color: inherit; font-size: inherit; text-align: left; cursor: pointer; border-radius: 4px; }
 .anchor img { width: 26px; height: 38px; object-fit: cover; border-radius: 3px; }
 .anchor .a-kind { font-weight: 600; }
 .anchor.like .a-kind { color: var(--accent); }
@@ -147,6 +150,28 @@ a { color: var(--text); }
 .taste-keys { margin-top: 14px; }
 .hint { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
 .like-c { color: var(--accent); } .dislike-c { color: var(--negative); }
+
+/* 접힌 취향: 한 줄 요약만 */
+.taste.folded { padding-top: 10px; padding-bottom: 10px; }
+.taste.folded > :not(.taste-mini) { display: none; }
+.taste-mini { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.taste-mini[hidden] { display: none; }
+.mini-covers { display: flex; gap: 4px; flex: none; }
+.mini-covers:empty { display: none; }
+.mini-covers img { width: 26px; height: 38px; object-fit: cover; border-radius: 3px; background: var(--raised); }
+.mini-text { flex: 1; min-width: 0; color: var(--muted); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-text b { color: var(--text); font-weight: 600; }
+.taste-mini .btn { flex: none; }
+
+/* 켜 둔 필터: 옅은 알약, 눌러서 끈다 */
+.active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: var(--gap); }
+.active-filters[hidden] { display: none; }
+.af-chip { display: inline-flex; align-items: center; gap: 2px; height: 32px; padding: 0 4px 0 12px; border: 0; border-radius: 999px; background: var(--pill-neutral-bg); color: var(--text); font-size: 13px; white-space: nowrap; cursor: pointer; transition: background 150ms; }
+.af-chip:hover { background: var(--active); }
+.af-chip .x { display: inline-flex; align-items: center; justify-content: center; width: 24px; color: var(--faint); font-size: 16px; }
+.af-chip:hover .x { color: var(--text); }
+.af-clear { height: 32px; padding: 0 8px; border: 0; background: none; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; cursor: pointer; }
+.af-clear:hover { color: var(--text); }
 
 /* 1순위: 화면에서 가장 큰 블록 = "오늘 뭐 하지?"의 답 */
 .pick { margin-top: var(--gap); }
@@ -240,7 +265,13 @@ dialog::backdrop { background: rgba(0,0,0,.7); }
   .shell { grid-template-columns: minmax(0, 1fr); }
   .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px 16px; }
   .brand { padding: 0; }
-  .side-toggle { display: block; margin-left: auto; height: 36px; padding: 0 14px; border: 1px solid var(--control); border-radius: var(--radius-control); background: none; }
+  .side-toggle { display: block; margin-left: auto; min-width: 64px; height: 44px; padding: 0 14px; border: 1px solid var(--control); border-radius: var(--radius-control); background: none; white-space: nowrap; }
+  /* 켜 둔 필터는 한 줄로 두고 옆으로 밀어 본다 (세로 공간을 아낀다), 손가락 크기 44px */
+  .active-filters { flex-wrap: nowrap; overflow-x: auto; margin-top: 12px; scrollbar-width: none; }
+  .af-chip, .af-clear { flex: none; height: 44px; }
+  .taste-mini .btn, .backup .btn { height: 44px; }
+  .taste.folded { padding: 6px 12px; }
+  .mini-text { white-space: normal; line-height: 1.35; }
   .side-body { display: none; padding-top: 16px; }
   .side.open .side-body { display: block; }
   .canvas { padding: 20px 16px 40px; }

@@ -108,6 +108,12 @@
 
         <div class="side-foot">
           <button type="button" class="btn primary wide" id="install" hidden>앱으로 설치</button>
+          <div class="backup">
+            <p class="backup-note">웹·설치한 앱·Windows 앱은 저장 공간이 따로라, 옮길 때는 파일로 내보내고 가져와 주세요.</p>
+            <button type="button" class="btn wide" id="b-export">내 데이터 내보내기</button>
+            <button type="button" class="btn ghost wide" id="b-import">가져오기</button>
+            <input type="file" id="b-file" accept="application/json,.json" hidden>
+          </div>
           <a href="https://github.com/" id="repo-link" target="_blank" rel="noopener">GitHub에서 보기</a>
         </div>
       </div>
@@ -147,7 +153,15 @@
             <button type="button" class="btn ghost" id="t-example">예시 취향</button>
             <button type="button" class="btn ghost" id="t-share">취향 링크 복사</button>
             <button type="button" class="btn ghost" id="t-clear">비우기</button>
+            <button type="button" class="btn ghost" id="t-fold" aria-controls="taste" hidden>접기</button>
           </div>
+        </div>
+
+        <!-- 접었을 때 한 줄 요약 -->
+        <div class="taste-mini" id="t-mini" hidden>
+          <span class="mini-covers" id="t-mini-covers"></span>
+          <span class="mini-text" id="t-mini-text"></span>
+          <button type="button" class="btn" id="t-edit" aria-controls="taste">편집</button>
         </div>
 
         <div class="search-wrap">
@@ -162,6 +176,8 @@
           <div class="chips" id="t-keywords"></div>
         </div>
       </section>
+
+      <div class="active-filters" id="active-filters" role="group" aria-label="켜 둔 필터" hidden></div>
 
       <section id="pick" class="pick" aria-label="1순위 추천"></section>
 

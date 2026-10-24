@@ -105,6 +105,7 @@ const S = {
   keywords: {},    // 특성 키('t:story', 's:jrpg') -> 1 | -1
   status: {},      // id -> wish | playing | done | dropped
   f: defaultFilters(),
+  native: false,   // Windows 앱(exe) 안에서 열려 Steam 프록시(/proxy/)를 쓸 수 있는지 (detectNative)
   tab: 'rec', shown: PAGE, showFar: false, q: ''
 };
 
@@ -119,12 +120,19 @@ function loadState() {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || migrateV1();
     if (!s) return;
     S.anchors = s.anchors || {}; S.external = s.external || {}; S.keywords = s.keywords || {};
-    S.status = s.status || {}; S.f = Object.assign(defaultFilters(), s.f || {});
-    if (!SORTS.includes(S.f.sort)) S.f.sort = 'score';
-    if (!TIMES.includes(S.f.time)) S.f.time = 'any';
-    if (!Array.isArray(S.f.features)) S.f.features = [];
-    S.f.quick = S.f.quick === true;
+    S.status = s.status || {}; S.f = normFilters(s.f);
   } catch (e) { /* 저장소 없이도 동작 */ }
+}
+
+// 저장했거나 가져온 필터를 지금 형식에 맞춘다 (모르는 값은 기본값으로)
+function normFilters(raw) {
+  const f = Object.assign(defaultFilters(), raw && typeof raw === 'object' ? raw : {});
+  if (!SORTS.includes(f.sort)) f.sort = 'score';
+  if (!TIMES.includes(f.time)) f.time = 'any';
+  for (const k of ['modes', 'genres', 'styles', 'features']) f[k] = Array.isArray(f[k]) ? f[k].filter((x) => typeof x === 'string') : [];
+  for (const k of ['leaving', 'fresh', 'quick']) f[k] = f[k] === true;
+  f.hidedone = f.hidedone !== false;
+  return f;
 }
 
 // v1: anchors 값이 문자열, keywords 키에 접두어 없음
@@ -389,7 +397,7 @@ function tileHtml(g, score, reasons) {
   const flag = g.leavingSoon ? '<span class="flag-tag leaving">곧 종료</span>' : g.recentlyAdded ? '<span class="flag-tag fresh">최근 추가</span>' : '';
   const st = S.status[g.id];
   return `<article class="tile">
-    <div class="cover" data-open="${g.id}">
+    <div class="cover" data-open="${g.id}" role="button" tabindex="0" aria-label="${esc(g.title)} 자세히 보기">
       <img loading="lazy" src="${esc(img(g.poster, 352))}" alt="">
       ${score != null ? `<span class="score-tag num" title="추천 점수 (1위=100)">${score}</span>` : ''}${flag}
     </div>
@@ -532,7 +540,9 @@ function render() {
     all: `지금 게임패스에 있는 게임 중 조건에 맞는 ${list.length}개${scores ? ' · 숫자는 내 취향 점수' : ''}${timeNote}`,
     mine: `${list.length}개 · 관심, 플레이 중, 완료, 포기 순`
   };
-  renderChrome(lead[S.tab]);
+  // 결과가 적은 까닭이 필터라면 그렇다고 말해 준다
+  const few = S.tab !== 'mine' && (S.tab === 'rec' ? total : list.length) < 5 && activeFilters().length;
+  renderChrome(lead[S.tab] + (few ? ' · 필터 때문에 적게 보여요' : ''));
 }
 
 // 곧 추가 탭: 취향 점수·필터 없이 출시일 기준 순서(soonList). 제목 검색만 된다
@@ -565,7 +575,68 @@ function renderChrome(summary) {
   $('#mine-count').textContent = Object.keys(S.status).filter((id) => S.byId.has(id) || soonOf(id)).length || '';
   $('#all-count').textContent = S.games.length;
   renderTaste();
+  renderActive();
   saveState();
+}
+
+// ---------- 켜 둔 필터 ----------
+
+const PLAN_LABEL = { naver: '네이버플러스', pcgp: 'PC Game Pass', ultimate: 'Ultimate', premium: 'Premium', essential: 'Essential' };
+const AGE_FILTER = { 0: '전체이용가만', 12: '12세까지', 15: '15세까지' };
+
+// 기본값과 다른 필터 하나하나 [{ id, label }]. tab을 주면 그 탭에 실제로 걸리는 것만
+// (한국어 'playable'·완료 숨기기 켜짐은 기본값이라 넣지 않는다)
+function activeFilters(tab = S.tab) {
+  const out = [];
+  const q = S.q.trim();
+  if (tab === 'mine') return out;
+  if (tab !== 'soon') {
+    const f = S.f; const d = defaultFilters();
+    if (f.plan !== d.plan) out.push({ id: 'plan', label: `요금제: ${PLAN_LABEL[f.plan] || f.plan}` });
+    if (f.platform !== d.platform) out.push({ id: 'platform', label: `플랫폼: ${f.platform === 'pc' ? 'PC' : '콘솔'}` });
+    if (f.korean !== d.korean) out.push({ id: 'korean', label: `한국어: ${f.korean === 'official' ? '공식만' : '전체'}` });
+    if (f.age !== d.age) out.push({ id: 'age', label: `연령: ${AGE_FILTER[f.age] || f.age}` });
+    if (f.time !== d.time) out.push({ id: 'time', label: `플레이타임: ${f.time}시간 이하` });
+    f.modes.forEach((x) => out.push({ id: 'modes:' + x, label: `방식: ${MODES[x] || x}` }));
+    f.genres.forEach((x) => out.push({ id: 'genres:' + x, label: `장르: ${GENRES[x] || x}` }));
+    f.styles.forEach((x) => out.push({ id: 'styles:' + x, label: `세부 장르: ${STYLES[x] || x}` }));
+    f.features.forEach((x) => out.push({ id: 'features:' + x, label: `기능: ${FEATURES[x] || x}` }));
+    if (f.quick) out.push({ id: 'quick', label: '짧게 끊어 하기' });
+    if (f.leaving) out.push({ id: 'leaving', label: '곧 종료만' });
+    if (f.fresh) out.push({ id: 'fresh', label: '최근 추가만' });
+    if (!f.hidedone && tab === 'rec') out.push({ id: 'hidedone', label: '완료·포기도 보기' });
+  }
+  // 추천 탭에는 검색칸이 없지만 다른 탭에서 넣은 검색어도 걸리므로 알린다
+  if (q) out.push({ id: 'q', label: `검색: ${q}` });
+  return out;
+}
+
+// 사이드바에서 고른 필터 개수 (탭과 상관없이, 검색어는 빼고)
+const sideFilterCount = () => activeFilters('all').filter((x) => x.id !== 'q').length + (S.f.hidedone ? 0 : 1);
+
+function clearFilter(id) {
+  const [key, val] = id.split(/:(.*)/s);
+  if (key === 'q') { S.q = ''; $('#q').value = ''; }
+  else if (val != null && Array.isArray(S.f[key])) S.f[key] = S.f[key].filter((x) => x !== val);
+  else if (key in S.f) S.f[key] = defaultFilters()[key];
+}
+
+function renderActive() {
+  const list = activeFilters();
+  const box = $('#active-filters');
+  box.hidden = !list.length;
+  box.innerHTML = list.map((x) => `<button type="button" class="af-chip" data-clear="${esc(x.id)}" aria-label="${esc(x.label)} 필터 끄기">${esc(x.label)}<span class="x" aria-hidden="true">×</span></button>`).join('') +
+    (list.length >= 2 ? '<button type="button" class="af-clear" data-clear-all>모두 지우기</button>' : '');
+  const n = sideFilterCount();
+  $('#f-reset').textContent = n ? `필터 초기화 (${n}개 켜짐)` : '필터 초기화';
+  sideToggleLabel();
+}
+
+function sideToggleLabel() {
+  const open = document.querySelector('.side').classList.contains('open');
+  const n = sideFilterCount();
+  $('#side-toggle').textContent = open ? '닫기' : n ? `필터 ${n}` : '필터';
+  $('#side-toggle').setAttribute('aria-label', open ? '필터 닫기' : n ? `필터 열기, ${n}개 켜짐` : '필터 열기');
 }
 
 // 관심·플레이 중으로 표시한 게임이 곧 빠지면 맨 위에 알린다. 닫으면 같은 게임 묶음에는 다시 띄우지 않는다
@@ -604,17 +675,48 @@ function renderTaste() {
     if (!g) return '';
     const sub = a.aspects && a.aspects.length ? `좋았던 점: ${a.aspects.slice(0, 3).map(featureLabel).join('·')}${a.aspects.length > 3 ? ' 외' : ''}`
       : (g.external ? extSource(g) || '게임패스 밖 게임' : '전부 반영');
-    return `<span class="anchor ${a.kind}" data-aspect="${esc(id)}" title="눌러서 좋았던 점 고르기">
+    // 좋았던 점 고르기는 버튼이라 키보드로도 열린다
+    return `<span class="anchor ${a.kind}">
+      <button type="button" class="a-open" data-aspect="${esc(id)}" title="눌러서 좋았던 점 고르기">
       ${g.poster ? `<img src="${esc(img(g.poster, 52))}" alt="">` : ''}
       <span><span class="a-kind">${a.kind === 'like' ? '좋아요' : '별로'}</span> ${esc(g.title)}<span class="a-sub"> · ${esc(sub)}</span></span>
-      <button class="x" data-remove="${esc(id)}" aria-label="${esc(g.title)} 빼기">×</button></span>`;
+      </button>
+      <button type="button" class="x" data-remove="${esc(id)}" aria-label="${esc(g.title)} 빼기">×</button></span>`;
   }).join('');
+  renderTasteFold();
   const chip = (k, label) => {
     const v = S.keywords[k];
     return `<button type="button" class="chip ${v > 0 ? 'like' : v < 0 ? 'dislike' : ''}" data-kw="${k}">${label}</button>`;
   };
   $('#t-keywords').innerHTML = Object.entries(STYLES).map(([k, v]) => chip('s:' + k, v)).join('') +
     Object.entries(TAGS).map(([k, v]) => chip('t:' + k, v)).join('');
+}
+
+// 취향 패널 접기: 휴대폰에서는 처음에 접고, 데스크톱에서는 편다. 사용자가 바꾸면 기억한다.
+// 취향이 비어 있으면 늘 편다 (그때는 패널 자체가 시작 안내라서)
+const FOLD_KEY = 'gpc-taste-folded';
+function tasteFolded() {
+  try { const v = localStorage.getItem(FOLD_KEY); if (v === '1' || v === '0') return v === '1'; } catch (e) { /* 기본값으로 */ }
+  return window.matchMedia('(max-width: 860px)').matches;
+}
+function setTasteFolded(folded) {
+  try { localStorage.setItem(FOLD_KEY, folded ? '1' : '0'); } catch (e) { /* 이번만 */ }
+  renderTasteFold();
+}
+function renderTasteFold() {
+  const nA = Object.keys(S.anchors).filter((id) => gameOf(id)).length;
+  const nK = Object.keys(S.keywords).length;
+  const empty = !nA && !nK;
+  const folded = !empty && tasteFolded();
+  $('#taste').classList.toggle('folded', folded);
+  $('#t-mini').hidden = !folded;
+  $('#t-fold').hidden = empty;
+  $('#t-fold').setAttribute('aria-expanded', String(!folded));
+  $('#t-edit').setAttribute('aria-expanded', String(!folded));
+  if (!folded) return;
+  $('#t-mini-text').innerHTML = `<b>내 취향</b>: 게임 <span class="num">${nA}</span>개 · 요소 <span class="num">${nK}</span>개`;
+  $('#t-mini-covers').innerHTML = Object.keys(S.anchors).map(gameOf).filter((g) => g && g.poster).slice(0, 3)
+    .map((g) => `<img src="${esc(img(g.poster, 52))}" alt="" title="${esc(g.title)}">`).join('');
 }
 
 function renderFilterChips() {
@@ -733,7 +835,24 @@ function openDetail(id) {
         ${issue ? `<a href="${esc(issue)}" target="_blank" rel="noopener">한글패치 정보 제보·수정</a>` : ''}
       </div>
     </div>`;
-  if (!$('#detail').open) $('#detail').showModal();
+  if (!$('#detail').open) {
+    detailFrom = { el: document.activeElement, id };
+    $('#detail').showModal();
+  }
+}
+
+// 상세를 닫으면 연 곳으로 초점을 돌려준다. 그 사이 목록을 다시 그렸으면 같은 게임의 표지로
+let detailFrom = null;
+function restoreDetailFocus() {
+  if ($('#detail').open) return;   // 닫힘 알림이 오기 전에 다시 열렸으면 그대로 둔다
+  const from = detailFrom; detailFrom = null;
+  if (!from) return;
+  let el = from.el && from.el.isConnected && from.el !== document.body ? from.el : null;
+  if (!el) {
+    const sel = `[data-open="${CSS.escape(from.id)}"]`;
+    el = document.querySelector(`#grid ${sel}[tabindex], #pick button${sel}, #alert ${sel}`);
+  }
+  if (el) el.focus();
 }
 
 // GitHub Pages(owner.github.io/repo)에서 열리면 저장소 주소를 알아낸다
@@ -849,7 +968,7 @@ async function addStoreGame(storeId, kind, aspects = null) {
   // 게임패스에 있는 게임이면 그쪽으로
   const inPass = S.games.find((g) => g.ids.includes(storeId));
   if (inPass) { S.anchors[inPass.id] = { kind, aspects }; return inPass; }
-  return anchorExternal(await analyzeStoreProduct(storeId), kind, aspects);
+  return anchorExternal(await fillAppSteam(await analyzeStoreProduct(storeId)), kind, aspects);
 }
 
 // 게임패스에 있는 게임이면 밖 게임 대신 그 게임을 기준으로 (Steam ID나 판 표기를 뗀 제목이 같을 때)
@@ -875,6 +994,7 @@ function extSource(g) {
 // 넣은 뒤 알림: 어떤 자료로 분석했는지 말해 준다
 function addedMsg(g) {
   if (!g.external) return `「${g.title}」를 취향에 넣었어요. 눌러서 좋았던 점을 고를 수 있어요`;
+  if (steamTagsOf(g) && g.steamVia === 'app') return `「${g.title}」를 Steam 태그로 분석했어요 (앱에서 직접). 눌러서 좋았던 점을 고를 수 있어요`;
   if (steamTagsOf(g)) return `「${g.title}」를 Steam 태그로 분석했어요. 눌러서 좋았던 점을 고를 수 있어요`;
   if (!g.genres.length && !g.styles.length && !Object.keys(g.tagW).length) return `「${g.title}」는 장르 정보가 거의 없어요. 직접 추가로 요소를 골라 주시면 더 정확해요`;
   return `「${g.title}」를 ${g.source === 'wikidata' ? '위키데이터 장르로' : '취향에'} 넣었어요. 눌러서 좋았던 점을 고를 수 있어요`;
@@ -934,20 +1054,116 @@ function mapGenres(labels, makers = '', styleLabels = []) {
   return { genres: [...genres], styles: [...styles] };
 }
 
-// external.json의 게임 하나를 밖 게임으로
+// external.json의 게임 하나(또는 앱에서 직접 받은 같은 모양의 자료)를 밖 게임으로
 function steamGame(rec) {
   const { genres, styles } = mapGenres(rec.genres || [], '', strongTags(rec));
-  return {
+  const g = {
     id: 'steam:' + rec.appid, external: true, source: 'steam', steamAppId: rec.appid, title: rec.name, poster: steamPoster(rec.appid),
     publisher: '', developer: '', genres, styles, tagW: {}, modes: [], content: { flags: [] }, steamTags: { ...rec.tags }
   };
+  if (rec.viaApp) g.steamVia = 'app';
+  if (rec.metacritic) { g.metacritic = rec.metacritic; g.metacriticUrl = rec.metacriticUrl || ''; }
+  return g;
 }
 
 async function addSteamGame(appid, kind) {
   await loadExternal();
-  const rec = EXT.byApp.get(appid);
+  // 사전에 없으면 Windows 앱에서는 SteamSpy로 바로 받아 같은 모양으로 만든다
+  const rec = EXT.byApp.get(appid) || (S.native ? await appSteamRec(appid, appNames.get(appid)) : null);
   if (!rec) throw new Error('Steam 자료에 없는 게임이에요');
   return anchorExternal(steamGame(rec), kind);
+}
+
+// ---------- Windows 앱 전용: Steam 프록시 ----------
+// exe(WebView2) 안에서는 https://curator.app/proxy/ 가 Steam·SteamSpy를 대신 불러 준다 (app/README.md).
+// 웹·PWA에는 이 주소가 없으므로 S.native일 때만 부른다
+
+// 시작할 때 한 번: exe 안인지 알아본다 (2초 안에 답이 없으면 웹으로 본다). 시작을 막지 않는다
+async function detectNative() {
+  if (location.hostname !== 'curator.app') return;
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 2000);
+  try {
+    const res = await fetch('/proxy/ping', { signal: ctl.signal, cache: 'no-store' });
+    const d = res.ok ? await res.json() : null;
+    S.native = !!(d && d.ok === true);
+  } catch (e) { S.native = false; } finally { clearTimeout(timer); }
+}
+
+async function proxyJson(path, ms = 15000) {
+  if (!S.native) throw new Error('앱 밖에서는 프록시가 없어요');
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), ms);
+  try {
+    const res = await fetch(path, { signal: ctl.signal });
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+
+// Steam 상점 검색 결과 -> [{ appid, name, image }]. 같은 검색어는 다시 묻지 않는다
+const appFound = new Map(); const appNames = new Map();
+async function appSteamSearch(term) {
+  if (appFound.has(term)) return appFound.get(term);
+  const d = await proxyJson(`/proxy/steam-search?term=${encodeURIComponent(term)}`);
+  const out = ((d && d.items) || []).filter((x) => x && Number.isInteger(Number(x.id)) && Number(x.id) > 0 && x.name)
+    .map((x) => ({ appid: Number(x.id), name: String(x.name), image: typeof x.tiny_image === 'string' ? x.tiny_image : '' }));
+  out.forEach((x) => appNames.set(x.appid, x.name));
+  appFound.set(term, out);
+  return out;
+}
+
+// SteamSpy 태그 -> 사전(fetch-external.ps1)과 같은 무게: 표가 많은 15개, 가장 많은 표를 1로 (소수 둘째 자리)
+function topSteamTags(tags) {
+  if (!isObj(tags)) return null;
+  const top = Object.entries(tags).map(([t, v]) => [t, Number(v) || 0]).filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1]).slice(0, 15);
+  if (!top.length) return null;
+  const max = top[0][1];
+  return Object.fromEntries(top.map(([t, v]) => [t, Math.round((v / max) * 100) / 100]));
+}
+
+// 앱에서 직접 받은 Steam 자료를 external.json 항목과 같은 모양으로 ({ appid, name, tags, genres } + 메타크리틱).
+// 태그를 못 받으면 null. 상점 정보(steam-app)는 덤이라 실패해도 태그만으로 간다
+const appRecs = new Map();
+function appSteamRec(appid, name = '') {
+  if (!S.native || !Number.isInteger(appid) || appid <= 0) return Promise.resolve(null);
+  if (appRecs.has(appid)) return appRecs.get(appid);
+  const job = (async () => {
+    const spy = await proxyJson(`/proxy/steamspy?appid=${appid}`);
+    const tags = topSteamTags(spy && spy.tags);
+    if (!tags) return null;
+    const genres = String((spy && spy.genre) || '').split(/\s*,\s*/).filter(Boolean);
+    const rec = { appid, name: name || (spy && spy.name) || '', tags, genres, viaApp: true };
+    try {
+      const d = await proxyJson(`/proxy/steam-app?appid=${appid}`);
+      const app = d && d[String(appid)];
+      if (app && app.success && isObj(app.data)) {
+        const a = app.data;
+        if (!rec.name && a.name) rec.name = String(a.name);
+        for (const x of Array.isArray(a.genres) ? a.genres : []) if (x && x.description && !rec.genres.includes(x.description)) rec.genres.push(String(x.description));
+        const m = a.metacritic && Number(a.metacritic.score);
+        if (m > 0) { rec.metacritic = m; rec.metacriticUrl = typeof a.metacritic.url === 'string' ? a.metacritic.url : ''; }
+      }
+    } catch (e) { /* 태그만으로 */ }
+    if (!rec.name) rec.name = `Steam ${appid}`;
+    return rec;
+  })().catch(() => null);
+  appRecs.set(appid, job);
+  job.then((r) => { if (!r) appRecs.delete(appid); });   // 실패는 기억하지 않는다 (다음에 다시)
+  return job;
+}
+
+// Steam ID는 있는데 태그가 없는 밖 게임(예: 사전에 없는 위키데이터 항목): 앱에서 태그를 받아 채운다. 실패하면 그대로
+async function fillAppSteam(g) {
+  if (!S.native || !g || steamTagsOf(g) || !Number.isInteger(g.steamAppId)) return g;
+  const rec = await appSteamRec(g.steamAppId);
+  if (!rec) return g;
+  const s = steamGame(rec);
+  g.steamTags = s.steamTags; g.steamVia = 'app';
+  if (!g.genres.length && !g.styles.length) { g.genres = s.genres; g.styles = s.styles; }
+  else g.styles = [...new Set([...g.styles, ...s.styles])];
+  if (!g.poster || /wikimedia\.org/.test(g.poster)) g.poster = s.poster;
+  if (s.metacritic && !metaOf(g)) { g.metacritic = s.metacritic; g.metacriticUrl = s.metacriticUrl; }
+  return g;
 }
 
 // 위키데이터: 키 없이 브라우저에서 바로 부를 수 있다(origin=*). PS·스위치 독점작도 있다
@@ -1045,7 +1261,7 @@ async function analyzeWikidata(qid) {
 }
 
 async function addWikidataGame(qid, kind) {
-  return anchorExternal(await analyzeWikidata(qid), kind);
+  return anchorExternal(await fillAppSteam(await analyzeWikidata(qid)), kind);
 }
 
 // 스토어에도 없는 게임(예: PS 독점): 이름과 요소를 직접 고른다
@@ -1079,10 +1295,11 @@ function updateSuggest() {
   const localHtml = local.length ? `<div class="sg-head">게임패스</div>${local.map((g) => row(g.id, g.title, img(g.poster, 64), '게임패스에 있음', 'data-sug')).join('')}` : '';
   const customHtml = `<div class="sg-head">목록에 없나요?</div><div class="sg-row"><span></span><span class="sg-title">「${esc(raw)}」 직접 추가<span class="sg-sub">이름과 좋았던 요소를 골라요</span></span><span class="sg-btns"><button class="btn small" data-custom="${esc(raw)}">추가</button></span></div>`;
   const latin = /^[\x20-\x7e]+$/.test(raw) && q.length >= 2;   // Steam 자료는 영어 이름뿐이라 영어로 찾을 때만
-  const st = { store: null, wd: null };   // null = 찾는 중, 'fail' = 실패
+  const useApp = S.native && q.length >= 2;   // Windows 앱에서만 Steam 상점을 직접 찾는다
+  const st = { store: null, wd: null, app: null };   // null = 찾는 중, 'fail' = 실패
   const seq = ++suggestSeq;
 
-  // 칸 순서: 게임패스 -> MS 스토어 -> Steam -> 위키데이터 -> 직접 추가. 결과가 오는 대로 다시 그린다
+  // 칸 순서: 게임패스 -> MS 스토어 -> Steam -> 위키데이터 -> (앱) Steam 직접 검색 -> 직접 추가. 결과가 오는 대로 다시 그린다
   const draw = () => {
     if (seq !== suggestSeq || box.hidden) return;
     // 같은 게임이 여러 칸에 나오지 않게: 앞 칸에 나온 제목(판 표기 뗀 것)·Steam ID는 뒤 칸에서 뺀다
@@ -1123,6 +1340,20 @@ function updateSuggest() {
         return row(w.qid, w.label, '', [w.desc, tagged ? 'Steam 태그 있음' : ''].filter(Boolean).join(' · ') || '위키데이터', 'data-wd');
       }).join('') : '<div class="sg-empty">위키데이터에서 게임을 찾지 못했어요</div>';
     }
+    // 앞 칸에 이미 나온 게임(Steam ID·제목)은 빼고 남은 것만
+    if (useApp) {
+      html += '<div class="sg-head">Steam (앱에서 직접 검색)</div>';
+      if (st.app === null) html += wait;
+      else if (st.app === 'fail') html += '<div class="sg-empty">Steam 검색에 실패했어요</div>';
+      else {
+        const found = st.app.filter((r) => take([r.name], [r.appid])).slice(0, 5);
+        // 게임패스에 있는 게임이면 누를 때 그 게임으로 들어간다 (anchorExternal)
+        const sub = (r) => (S.games.some((g) => g.steamAppId === r.appid) ? '게임패스에 있음'
+          : EXT.byApp.has(r.appid) ? 'Steam 사용자 태그로 비교해요' : 'Steam 태그를 앱에서 받아 비교해요');
+        html += found.length ? found.map((r) => row(r.appid, r.name, r.image, sub(r), 'data-steam')).join('')
+          : '<div class="sg-empty">더 찾은 Steam 게임이 없어요</div>';
+      }
+    }
     box.innerHTML = html + customHtml;
   };
   box.hidden = false;
@@ -1134,6 +1365,7 @@ function updateSuggest() {
     if (seq !== suggestSeq) return;
     storeSearch(raw).then((r) => { st.store = r; }, () => { st.store = 'fail'; }).then(draw);
     wdSearch(raw).then((r) => { st.wd = r; }, () => { st.wd = 'fail'; }).then(draw);
+    if (useApp) appSteamSearch(raw).then((r) => { st.app = r; }, () => { st.app = 'fail'; }).then(draw);
   }, 350);
 }
 
@@ -1219,6 +1451,70 @@ function importFromHash() {
     toast('링크의 취향을 불러왔어요');
   } catch (e) { toast('취향 링크를 읽지 못했어요'); }
   history.replaceState(null, '', location.pathname);
+}
+
+// ---------- 내 데이터 내보내기·가져오기 ----------
+// 웹·설치한 앱(PWA)·Windows 앱(WebView2)은 저장 공간이 따로라 파일로 옮긴다
+
+const BACKUP_VERSION = 2;
+function backupData() {
+  const external = {};
+  for (const id of Object.keys(S.anchors)) if (S.external[id]) external[id] = S.external[id];   // 기준으로 쓰는 밖 게임만
+  return { version: BACKUP_VERSION, anchors: S.anchors, external, keywords: S.keywords, status: S.status, f: S.f };
+}
+const backupBlob = () => new Blob([JSON.stringify(backupData(), null, 1)], { type: 'application/json' });
+const backupName = () => `gamepass-curator-backup-${todayStr().replace(/-/g, '')}.json`;
+
+// Blob + a[download]: 브라우저와 WebView2(Windows 앱) 둘 다 내려받기가 된다
+function exportBackup() {
+  try {
+    const url = URL.createObjectURL(backupBlob());
+    const a = document.createElement('a');
+    a.href = url; a.download = backupName(); a.hidden = true;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast(`${backupName()} 파일로 내보냈어요`);
+  } catch (e) { toast('내보내지 못했어요. 다시 해 주세요'); }
+}
+
+const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+// 파일 내용을 검사해 쓸 수 있는 것만 남긴다. 모양이 아예 다르면 null
+function parseBackup(raw) {
+  const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (!isObj(d) || d.version !== BACKUP_VERSION) return null;
+  if (!['anchors', 'keywords', 'status'].every((k) => isObj(d[k])) || (d.external != null && !isObj(d.external)) || (d.f != null && !isObj(d.f))) return null;
+  const anchors = {}; const external = {}; const keywords = {}; const status = {};
+  for (const [id, g] of Object.entries(d.external || {})) {
+    if (isObj(g) && typeof g.title === 'string' && /^(ext|steam|wd|custom):/.test(id)) {
+      external[id] = Object.assign({ genres: [], styles: [], tagW: {}, modes: [], content: { flags: [] } }, g, { id, external: true });
+    }
+  }
+  for (const [id, a] of Object.entries(d.anchors)) {
+    if (!isObj(a) || !['like', 'dislike'].includes(a.kind)) continue;
+    const aspects = Array.isArray(a.aspects) ? a.aspects.filter((k) => typeof k === 'string') : null;
+    anchors[id] = { kind: a.kind, aspects: aspects && aspects.length ? aspects : null };
+  }
+  for (const [k, v] of Object.entries(d.keywords)) if (v === 1 || v === -1) keywords[k] = v;
+  for (const [id, v] of Object.entries(d.status)) if (STATUS[v]) status[id] = v;
+  return { anchors, external, keywords, status, f: normFilters(d.f) };
+}
+
+// 지금 데이터를 파일 내용으로 바꾼다 (합치지 않는다). 바꾸기 전에 묻는다
+function importBackup(raw) {
+  let b = null;
+  try { b = parseBackup(raw); } catch (e) { b = null; }
+  if (!b) { toast('읽을 수 없는 파일이에요. 이 앱에서 내보낸 JSON 파일인지 확인해 주세요'); return false; }
+  // 데이터에 없는 게임은 취향에서 뺀다 (main과 같은 규칙)
+  if (S.games.length) for (const id of Object.keys(b.anchors)) if (!S.byId.has(id) && !b.external[id]) delete b.anchors[id];
+  const nA = Object.keys(b.anchors).length; const nK = Object.keys(b.keywords).length; const nS = Object.keys(b.status).length;
+  if (!confirm(`지금 취향·내 목록·필터를 파일 내용으로 바꿀까요?\n\n파일: 기준 게임 ${nA}개 · 요소 ${nK}개 · 내 목록 ${nS}개\n지금 데이터는 지워져요.`)) {
+    toast('가져오기를 취소했어요'); return false;
+  }
+  S.anchors = b.anchors; S.external = b.external; S.keywords = b.keywords; S.status = b.status; S.f = b.f;
+  S.shown = PAGE; S.showFar = false;
+  syncFilterInputs(); render();
+  toast(`가져왔어요: 기준 게임 ${nA}개 · 요소 ${nK}개 · 내 목록 ${nS}개`);
+  return true;
 }
 
 // ---------- 이벤트 ----------
@@ -1359,6 +1655,41 @@ function bind() {
 
   // 휴대폰: 사이드바(메뉴·필터)를 버튼으로 펼친다
   $('#side-toggle').addEventListener('click', () => toggleSide());
+
+  // 켜 둔 필터 칩: 눌러서 하나씩 끄거나 모두 지운다
+  $('#active-filters').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-clear], [data-clear-all]'); if (!b) return;
+    if (b.hasAttribute('data-clear-all')) { S.f = Object.assign(defaultFilters(), { sort: S.f.sort }); S.q = ''; $('#q').value = ''; }
+    else clearFilter(b.dataset.clear);
+    syncFilterInputs(); S.shown = PAGE; render();
+    // 지운 칩이 사라지므로 초점을 남은 첫 칩으로
+    const next = $('#active-filters [data-clear]');
+    if (next) next.focus();
+  });
+
+  // 취향 패널 접기·펴기
+  $('#t-fold').addEventListener('click', () => { setTasteFolded(true); $('#t-edit').focus(); });
+  $('#t-edit').addEventListener('click', () => { setTasteFolded(false); $('#t-fold').focus(); });
+
+  // 내 데이터 내보내기·가져오기
+  $('#b-export').addEventListener('click', exportBackup);
+  $('#b-import').addEventListener('click', () => { $('#b-file').value = ''; $('#b-file').click(); });
+  $('#b-file').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    let text = '';
+    try { text = await file.text(); } catch (err) { toast('파일을 읽지 못했어요'); return; }
+    importBackup(text);
+  });
+
+  // 키보드: role="button"인 표지는 Enter·Space로 상세를 연다
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest && e.target.closest('[role="button"][data-open]');
+    if (!el || el !== e.target) return;
+    e.preventDefault();
+    openDetail(el.dataset.open);
+  });
+  $('#detail').addEventListener('close', restoreDetailFocus);
 }
 
 function toggleSide(force) {
@@ -1366,7 +1697,7 @@ function toggleSide(force) {
   const open = force ?? !side.classList.contains('open');
   side.classList.toggle('open', open);
   $('#side-toggle').setAttribute('aria-expanded', String(open));
-  $('#side-toggle').textContent = open ? '닫기' : '필터';
+  sideToggleLabel();
 }
 
 // ---------- 앱 설치 (PWA) ----------
@@ -1393,6 +1724,7 @@ async function main() {
   importFromHash();
   bind();
   setupInstall();
+  detectNative();   // 기다리지 않는다 (Windows 앱이 아니면 아무것도 묻지 않는다)
   try {
     const res = await fetch('data/games.json', { cache: 'no-cache' });
     S.data = await res.json();
