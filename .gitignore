@@ -1,0 +1,8 @@
+# 네이버 검색 응답 캐시 (블로그 글 요약이 들어 있어 저장소에는 올리지 않는다)
+data/naver-cache/
+
+# OS·편집기
+Thumbs.db
+.DS_Store
+*.log
+.vscode/

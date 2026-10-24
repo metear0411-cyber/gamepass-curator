@@ -1,0 +1,41 @@
+name: 한글패치·한국어 정보 제보
+description: 한글패치가 있거나, 게임패스판에서 되는지/안 되는지, 한국어 표기가 틀렸는지 알려주세요
+title: "[한글패치] "
+labels: ["korean-info"]
+body:
+  - type: input
+    id: game
+    attributes:
+      label: 게임 이름
+      placeholder: "The Bard's Tale Trilogy"
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: 어떤 정보인가요?
+      options:
+        - 한글패치가 있고, 게임패스 PC판에서 적용돼요
+        - 한글패치가 있지만, 게임패스 PC판에서는 안 돼요
+        - 한글패치가 있는데 게임패스판에서 되는지는 몰라요
+        - 공식으로 한국어를 지원해요 (사이트 표기가 틀림)
+        - 한국어가 없어요 (사이트 표기가 틀림)
+        - 기타
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: 근거 링크
+      description: 패치 배포 글, 공식 공지 등. 패치 파일 자체는 올리지 말아 주세요.
+      placeholder: https://
+  - type: input
+    id: version
+    attributes:
+      label: 확인한 게임 버전·날짜
+      placeholder: "2026-10-24, 게임패스 PC판 v1.2.3"
+  - type: textarea
+    id: note
+    attributes:
+      label: 덧붙일 내용
+      description: 적용 방법, 주의할 점 등

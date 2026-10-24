@@ -1,0 +1,12 @@
+{
+  "_설명": "자동 수집이 틀린 한국어 정보를 사람이 바로잡는 파일입니다. id(스토어 상품 ID) 또는 title로 게임을 지정하고, korean은 official / official_likely / patch / patch_blocked / planned / none / none_found 중 하나입니다. 직접 확인했으면 verified를 true로, 근거 링크는 link에 적어 주세요.",
+  "_예시": {
+    "title": "게임 제목",
+    "korean": "patch",
+    "label": "한글패치 있음 · 게임패스판 적용 확인",
+    "link": "https://example.com/근거-글",
+    "verified": true,
+    "note": "2026-10-24 게임패스 PC판에서 직접 적용 확인"
+  },
+  "games": []
+}
