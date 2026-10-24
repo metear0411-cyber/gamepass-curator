@@ -69,8 +69,41 @@
     return out;
   }
 
-  // games: 게임패스 게임 목록, rules: 데이터의 rules (steamBridge만 쓴다)
-  function create({ games = [], rules = null } = {}) {
+  // 다양성 재정렬 기본값: 위에서 depth개까지만 고르고, top개 안에서는 같은 시리즈를 perSeries개까지만
+  // lambda 0.35에서는 예시 취향에 리그 오브 레전드(67점)가 5위까지 올라와 취향과 먼 게임이 끼었다. 0.2면 시리즈 제한은 지키면서 덜 흔든다
+  const DIVERSITY = { lambda: 0.2, depth: 24, top: 12, perSeries: 2 };
+
+  // 시리즈 키: 부제(':'·띄운 '-' 뒤)·괄호를 떼고, 둘째 단어부터 나오는 숫자·로마 숫자와 그 뒤를 버린다.
+  // "FINAL FANTASY IV" -> "finalfantasy", "Persona 3 Reload" -> "persona", "성검전설3 TRIALS of MANA" -> "성검전설"
+  const ROMAN = /^(?:i{1,3}|iv|vi{0,3}|ix|xi{0,3}|xiv|xvi{0,3})$/;
+  function seriesKey(title) {
+    let s = String(title || '').toLowerCase().replace(/[™®©]/g, '').replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
+    s = s.split(/[:：]|\s[-–—]\s|[–—]/)[0];
+    s = s.replace(/(\p{L})(\d)/gu, '$1 $2');   // 붙여 쓴 번호("성검전설3")도 떼어 본다
+    const words = s.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const cut = words.findIndex((w, i) => i > 0 && (/^\d+$/.test(w) || ROMAN.test(w)));
+    return (cut > 0 ? words.slice(0, cut) : words).join('');
+  }
+
+  // id -> 시리즈 묶음. 제목만으로는 "성검전설"과 "성검전설 Visions of Mana"가 갈리므로,
+  // 개발사·퍼블리셔가 둘 다 같고 키가 앞부분이 겹치면 같은 시리즈로 본다 (먼저 나온 키로 묶는다)
+  function seriesGroups(list) {
+    const out = new Map(); const byMaker = new Map();
+    for (const g of list) {
+      let k = seriesKey(g.title) || 'id:' + g.id;   // 키가 비면 혼자인 시리즈
+      const maker = g.developer && g.publisher ? `${g.developer}|${g.publisher}` : '';
+      if (maker) {
+        const known = byMaker.get(maker) || [];
+        const same = known.find((x) => Math.min(x.length, k.length) >= 3 && (x.startsWith(k) || k.startsWith(x)));
+        if (same) k = same; else { known.push(k); byMaker.set(maker, known); }
+      }
+      out.set(g.id, k);
+    }
+    return out;
+  }
+
+  // games: 게임패스 게임 목록, rules: 데이터의 rules (steamBridge만 쓴다), diversity: 추천순 다양성 재정렬 (끄면 점수순 그대로)
+  function create({ games = [], rules = null, diversity = true } = {}) {
     const byId = new Map(games.map((g) => [g.id, g]));
     const idf = new Map(); const vec = new Map();
     const bridge = () => (rules && rules.steamBridge) || DEFAULT_BRIDGE;
@@ -196,11 +229,40 @@
       return out;
     }
 
+    // 점수순 list를 다양하게 다시 줄 세운다 (MMR). 한 시리즈(예: FF I~VI)가 위를 다 차지하지 않게,
+    // 위 depth개는 "점수 - λ·이미 고른 게임과의 최대 유사도"가 큰 순으로 고르고 top개 안에서는 시리즈당 perSeries개까지만.
+    // 점수(scores)는 건드리지 않는다: 화면의 숫자는 원래 점수 그대로, 순서만 바뀐다. 나머지는 원래 순서로 뒤에 붙는다
+    function diversify(list, scores, opt = {}) {
+      const o = { diversity, ...DIVERSITY, ...opt };
+      if (!o.diversity || !scores || list.length < 2) return list.slice();
+      const series = seriesGroups(list);
+      const rest = list.slice(); const out = []; const count = new Map();
+      const maxSim = new Map(list.map((g) => [g.id, 0]));
+      while (out.length < o.depth && rest.length) {
+        const capped = out.length < o.top;
+        let best = -1; let bestVal = -Infinity;
+        for (let i = 0; i < rest.length; i++) {
+          const g = rest[i];
+          if (capped && (count.get(series.get(g.id)) || 0) >= o.perSeries) continue;
+          const v = (scores.get(g.id) || 0) / 100 - o.lambda * maxSim.get(g.id);
+          if (v > bestVal) { bestVal = v; best = i; }   // 같으면 앞(점수 높은 쪽)을 둔다
+        }
+        if (best < 0) best = 0;   // 남은 게 모두 상한에 걸리면 원래 순서대로
+        const [g] = rest.splice(best, 1);
+        out.push(g);
+        count.set(series.get(g.id), (count.get(series.get(g.id)) || 0) + 1);
+        const gv = vec.get(g.id);
+        if (gv) for (const h of rest) { const hv = vec.get(h.id); if (hv) maxSim.set(h.id, Math.max(maxSim.get(h.id), cos(gv, hv))); }
+      }
+      return out.concat(rest);
+    }
+
     return {
-      games, byId, idf, vec, bridge, featureKeys, idfOf, makeVec, anchorVec, profile, rawScore, score, explain,
-      vecOf: (id) => vec.get(id)
+      games, byId, idf, vec, bridge, featureKeys, idfOf, makeVec, anchorVec, profile, rawScore, score, explain, diversify,
+      diversity, vecOf: (id) => vec.get(id)
     };
   }
 
-  return { create, W, DEFAULT_BRIDGE, MIN_SCORE, REASON_SKIP, nameable, steamTagsOf, cos, dot, normalize, fold, topLabels };
+  return { create, W, DEFAULT_BRIDGE, MIN_SCORE, DIVERSITY, REASON_SKIP, nameable, steamTagsOf, cos, dot, normalize, fold, topLabels,
+    seriesKey, seriesGroups };
 });

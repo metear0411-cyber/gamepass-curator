@@ -106,5 +106,44 @@
       "steamTags": { "Card Game": 1, "Deckbuilding": 0.9 },
       "modes": ["single"], "content": { "flags": ["gambling", "language"] }, "publisher": "Pub Z", "developer": "Dev Z"
     }
+  ],
+  "_seriesNote": "다양성 재정렬 검사용: 거의 같은 JRPG 시리즈 6편. games에 섞으면 기존 사례의 IDF·순위가 바뀌므로 따로 둔다",
+  "seriesGames": [
+    {
+      "id": "fq1", "title": "FINAL QUEST", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    },
+    {
+      "id": "fq2", "title": "FINAL QUEST II", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    },
+    {
+      "id": "fq3", "title": "FINAL QUEST III", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    },
+    {
+      "id": "fq4", "title": "FINAL QUEST IV: 달의 계승자", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    },
+    {
+      "id": "fq5", "title": "FINAL QUEST V", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    },
+    {
+      "id": "fq6", "title": "FINAL QUEST VI", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.85, "Classic": 0.8, "Pixel Graphics": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub Q", "developer": "Dev Q"
+    }
   ]
 }

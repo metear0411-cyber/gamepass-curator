@@ -122,6 +122,61 @@
         const n = Recommend.normalize(new Map([['a', 0.5], ['b', 0.25], ['c', 0]]));
         t.ok(n.get('a') === 100 && n.get('b') === 50 && n.get('c') === 0, 'normalize: 최댓값 기준 비율로 반올림');
         t.equal(Recommend.normalize(new Map([['a', 0]])).get('a'), 0, 'normalize: 모두 0이면 0');
+      }],
+
+      ['다양성 재정렬: 위 12개에 같은 시리즈는 2개까지, 게임은 빠짐없이, 점수는 그대로', () => {
+        const all = [...games, ...(fixture.seriesGames || [])];
+        const E2 = Recommend.create({ games: all, rules: fixture.rules });
+        const list = all.filter((g) => g.id !== 'jrpg1');
+        const scores = E2.score(list, { anchors: { jrpg1: like() } });
+        const before = new Map(scores);
+        const byScore = [...list].sort((a, b) => scores.get(b.id) - scores.get(a.id));
+        const series = Recommend.seriesGroups(all);
+        const fqIn = (arr) => arr.slice(0, 12).filter((g) => series.get(g.id) === 'finalquest').length;
+        // 점수순만으로는 시리즈가 위를 채워야 이 검사가 의미 있다
+        t.ok(fqIn(byScore) > 2, `점수순 위 12개에 FINAL QUEST가 3개 이상이어야 의미 있는 검사 (${fqIn(byScore)}개)`);
+        const out = E2.diversify(byScore, scores);
+        const perSeries = {};
+        out.slice(0, 12).forEach((g) => { const k = series.get(g.id); perSeries[k] = (perSeries[k] || 0) + 1; });
+        t.ok(Object.values(perSeries).every((n) => n <= 2), `위 12개에 같은 시리즈가 2개를 넘으면 안 됨 (${JSON.stringify(perSeries)})`);
+        t.equal(out.length, list.length, '재정렬 뒤에도 게임 수가 같아야 함');
+        t.equal(new Set(out.map((g) => g.id)).size, list.length, '모든 게임이 한 번씩 있어야 함');
+        t.equal(out[0].id, byScore[0].id, '1위(지금 해 볼 1순위)는 점수 1위 그대로여야 함');
+        t.ok([...before].every(([id, s]) => scores.get(id) === s), '점수 Map은 바뀌지 않아야 함');
+        t.ok(byScore.map((g) => g.id).join() !== out.map((g) => g.id).join(), '순서는 실제로 바뀌어야 함');
+      }],
+
+      ['다양성을 끄면 순서가 점수순 그대로', () => {
+        const all = [...games, ...(fixture.seriesGames || [])];
+        const off = Recommend.create({ games: all, rules: fixture.rules, diversity: false });
+        const list = all.filter((g) => g.id !== 'jrpg1');
+        const scores = off.score(list, { anchors: { jrpg1: like() } });
+        const byScore = [...list].sort((a, b) => scores.get(b.id) - scores.get(a.id));
+        t.equal(off.diversify(byScore, scores).map((g) => g.id).join(), byScore.map((g) => g.id).join(), '엔진 옵션 diversity:false');
+        const on = Recommend.create({ games: all, rules: fixture.rules });
+        t.equal(on.diversify(byScore, scores, { diversity: false }).map((g) => g.id).join(), byScore.map((g) => g.id).join(), '호출 옵션 diversity:false');
+        t.equal(on.diversify(byScore, null).length, byScore.length, '점수가 없으면(취향 없음) 그대로');
+      }],
+
+      ['시리즈 키: 번호·로마 숫자·부제를 뗀 제목', () => {
+        const k = Recommend.seriesKey;
+        t.equal(k('FINAL FANTASY IV'), 'finalfantasy', 'FINAL FANTASY IV');
+        t.equal(k('FINAL FANTASY IV'), k('FINAL FANTASY VI'), 'FF IV와 FF VI는 같은 키');
+        t.equal(k('FINAL FANTASY'), 'finalfantasy', '번호 없는 첫 편도 같은 키');
+        t.equal(k('Persona 3 Reload'), 'persona', 'Persona 3 Reload');
+        t.equal(k('Persona 3 Reload'), k('Persona 5 Royal'), '페르소나 3 리로드와 5 로열은 같은 키');
+        t.equal(k('Ni no Kuni II: Revenant Kingdom PRINCE’S EDITION'), 'ninokuni', '부제(:) 뒤를 뗀다');
+        t.equal(k('성검전설3 TRIALS of MANA'), '성검전설', '붙여 쓴 번호도 뗀다');
+        t.equal(k('Tears of Metal (게임 미리보기)'), 'tearsofmetal', '괄호를 뗀다');
+        t.ok(k('Forza Horizon 5') !== '' && k('Forza Motorsport') !== '', '키가 비지 않아야 함');
+        // 개발사·퍼블리셔가 같고 키 앞부분이 겹치면 한 시리즈, 회사가 다르면 따로
+        const g = Recommend.seriesGroups([
+          { id: 'a', title: '성검전설3 TRIALS of MANA', developer: 'SE', publisher: 'SE' },
+          { id: 'b', title: '성검전설 Visions of Mana', developer: 'SE', publisher: 'SE' },
+          { id: 'c', title: '성검전설 Visions of Mana', developer: 'Other', publisher: 'SE' }
+        ]);
+        t.equal(g.get('a'), g.get('b'), '같은 회사의 성검전설 두 편은 한 시리즈');
+        t.ok(g.get('c') !== g.get('a'), '회사가 다르면 제목 키로만 묶는다');
       }]
     ];
   }

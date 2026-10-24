@@ -175,6 +175,7 @@ function priceOf(g) {
   if (msrp == null && member == null) return null;
   return { msrp, member, discount: Number.isInteger(p.discount) && p.discount > 0 ? p.discount : 0 };
 }
+const MEMBER_DISCOUNT = 20;   // 게임패스 회원이면 기본으로 받는 구매 할인(%)
 const won = (n) => `₩${Math.round(n).toLocaleString('ko-KR')}`;
 const handheldOf = (g) => (typeof g.handheld === 'string' && g.handheld.trim() ? g.handheld.trim() : null);
 const handheldLabel = (v) => HANDHELD[v.toLowerCase()] || v;
@@ -224,11 +225,26 @@ function featsOf(g) {
   return [...out];
 }
 
-// 곧 출시: 게임패스에 아직 없는 게임. 출시일 가까운 순 (날짜 모르면 뒤로)
+// 오늘 날짜(내 컴퓨터 시간대) YYYY-MM-DD
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 곧 추가: Xbox의 "게임패스에 곧 들어오는" 목록. releaseDate는 게임패스 추가일이 아니라 스토어 출시일이다
+// (추가일은 어디에도 없다). 출시 전 게임을 출시일 가까운 순으로 먼저, 이미 나온 게임은 최근 출시순, 날짜 모르면 맨 뒤
 function soonList() {
   const list = S.data && Array.isArray(S.data.comingSoon) ? S.data.comingSoon.filter((c) => c && c.id && c.title) : [];
-  const d = (c) => releaseOf(c) || '9999';
-  return list.slice().sort((a, b) => d(a).localeCompare(d(b)));
+  const today = todayStr();
+  const rank = (c) => { const d = releaseOf(c); return !d ? 2 : d > today ? 0 : 1; };
+  return list.slice().sort((a, b) => rank(a) - rank(b) ||
+    (rank(a) === 0 ? releaseOf(a).localeCompare(releaseOf(b)) : releaseOf(b).localeCompare(releaseOf(a))));
+}
+// 곧 추가 카드의 날짜 문구
+function soonDateLabel(c) {
+  const d = releaseOf(c);
+  if (!d) return '출시일 미정';
+  return d > todayStr() ? `${d} 출시 예정` : `이미 출시된 게임 · 스토어 출시 ${d}`;
 }
 const soonOf = (id) => (S.byId.has(id) ? null : soonList().find((c) => c.id === id) || null);
 const steamTagsOf = Recommend.steamTagsOf;
@@ -356,7 +372,8 @@ function extraPills(g) {
   return (ago ? `<span class="pill info" title="게임패스에 들어온 날 ${esc(firstSeenOf(g))}">${esc(ago)}</span>` : '') +
     (handheldOk(g) ? `<span class="pill" title="휴대용 PC(ROG Ally 등)에서 할 만해요">휴대용</span>` : '') +
     (g.familyKids === true ? `<span class="pill" title="Xbox 가족 및 어린이 모음">가족</span>` : '') +
-    (pr && pr.discount ? `<span class="pill info num" title="게임패스 회원 구매 할인">회원가 ${pr.discount}%↓</span>` : '') +
+    // 20%는 게임패스 회원 기본 할인이라 거의 모든 게임에 붙는다 -> 그보다 클 때만 띄운다
+    (pr && pr.discount > MEMBER_DISCOUNT ? `<span class="pill info num" title="게임패스 회원 기본 할인(${MEMBER_DISCOUNT}%)보다 큰 할인">할인 중 ${pr.discount}%↓</span>` : '') +
     (pt ? pill(['warn', PARTNER[pt][0]]) : '');
 }
 
@@ -383,15 +400,15 @@ function tileHtml(g, score, reasons) {
   </article>`;
 }
 
-// 곧 출시 카드: 상세 정보가 없어 표지·제목·출시일·장르와 관심 버튼만
+// 곧 추가 카드: 상세 정보가 없어 표지·제목·출시일·장르와 관심 버튼만
 function soonTileHtml(c) {
-  const d = releaseOf(c); const st = S.status[c.id];
+  const st = S.status[c.id];
   const genres = (Array.isArray(c.genres) ? c.genres : []).slice(0, 2).map((x) => pill(['', GENRES[x] || x])).join('');
   const maker = [c.developer, c.publisher !== c.developer ? c.publisher : ''].filter(Boolean).join(' · ');
   return `<article class="tile">
-    <div class="cover soon">${c.poster ? `<img loading="lazy" src="${esc(img(c.poster, 352))}" alt="">` : ''}<span class="flag-tag fresh">곧 출시</span></div>
+    <div class="cover soon">${c.poster ? `<img loading="lazy" src="${esc(img(c.poster, 352))}" alt="">` : ''}<span class="flag-tag fresh">곧 추가</span></div>
     <h3>${esc(c.title)}</h3>
-    <div class="meta">${pill(['', d ? `출시 예정 ${d}` : '출시일 미정'])}${genres}</div>
+    <div class="meta">${pill(['', soonDateLabel(c)])}${genres}</div>
     ${maker ? `<p class="why">${esc(maker)}</p>` : ''}
     <div class="acts"><button class="act ${st === 'wish' ? 'on' : ''}" data-act="status" data-val="wish" data-id="${esc(c.id)}">관심</button></div>
   </article>`;
@@ -449,7 +466,7 @@ function setTab(tab) {
 
 function render() {
   const soon = soonList();
-  // 곧 출시 자료가 없으면 탭을 숨긴다 (보고 있었다면 추천으로)
+  // 곧 추가 자료가 없으면 탭을 숨긴다 (보고 있었다면 추천으로)
   $('#soon-tab').hidden = !soon.length;
   $('#soon-count').textContent = soon.length || '';
   if (S.tab === 'soon' && !soon.length) setTab('rec');
@@ -461,7 +478,7 @@ function render() {
   let soonMine = [];
   if (S.tab === 'mine') {
     list = S.games.filter((g) => S.status[g.id]);
-    // 게임패스 목록에 없는 id는 곧 출시 자료에서 찾고, 거기에도 없으면 건너뛴다
+    // 게임패스 목록에 없는 id는 곧 추가 자료에서 찾고, 거기에도 없으면 건너뛴다
     soonMine = Object.keys(S.status).filter((id) => !S.byId.has(id)).map(soonOf).filter(Boolean);
   } else {
     list = S.games.filter((g) => {
@@ -478,7 +495,9 @@ function render() {
 
   let pick = null; let far = [];
   if (S.tab === 'rec' && scores && S.f.sort === 'score') {
+    // 접기는 원래 점수로 하고, 보이는 쪽만 한 시리즈가 몰리지 않게 순서를 섞는다 (숫자는 원래 점수 그대로)
     ({ near: list, far } = Recommend.fold(list, scores, MIN_SCORE));
+    list = E.diversify(list, scores);
     pick = list.shift() || null;
   }
 
@@ -516,7 +535,7 @@ function render() {
   renderChrome(lead[S.tab]);
 }
 
-// 곧 출시 탭: 취향 점수·필터 없이 출시일 순. 제목 검색만 된다
+// 곧 추가 탭: 취향 점수·필터 없이 출시일 기준 순서(soonList). 제목 검색만 된다
 function renderSoon(soon) {
   const q = norm(S.q);
   const list = soon.filter((c) => !q || norm(c.title).includes(q));
@@ -525,12 +544,12 @@ function renderSoon(soon) {
     '<div class="empty">찾는 게임이 없어요.</div>';
   $('#more').hidden = list.length <= S.shown;
   $('#far').hidden = true;
-  renderChrome(`게임패스에 들어올 예정인 ${list.length}개 · 출시일 가까운 순 · 관심을 눌러 두면 내 목록에 모여요`);
+  renderChrome(`게임패스에 곧 들어오는 게임 ${list.length}개 · 추가 날짜는 Microsoft가 공개하지 않아요`);
 }
 
 // 모든 탭에 공통인 제목·요약·개수
 function renderChrome(summary) {
-  const titles = { rec: '추천', all: '전체 게임', mine: '내 목록', soon: '곧 출시' };
+  const titles = { rec: '추천', all: '전체 게임', mine: '내 목록', soon: '곧 추가' };
   $('#page-title').textContent = titles[S.tab];
   $('#summary').textContent = summary;
   $('#q').hidden = S.tab === 'rec';
@@ -567,7 +586,7 @@ function renderAlert() {
   box.hidden = false;
 }
 
-// 최근에 빠진 게임: 전체 게임·곧 출시 탭 아래에 접어 둔다. 자료가 없으면 숨긴다
+// 최근에 빠진 게임: 전체 게임·곧 추가 탭 아래에 접어 둔다. 자료가 없으면 숨긴다
 function renderLeft() {
   const list = (S.data && Array.isArray(S.data.recentlyLeft) ? S.data.recentlyLeft : [])
     .filter((x) => x && typeof x.title === 'string' && x.title.trim())
@@ -653,7 +672,7 @@ function openDetail(id) {
   const pr = priceOf(g);
   const priceCell = pr ? [
     pr.msrp != null ? `정가 <span class="num">${won(pr.msrp)}</span>` : '',
-    pr.member != null && pr.member !== pr.msrp ? `회원가 <span class="num">${won(pr.member)}</span>${pr.discount ? ` (${pr.discount}% 할인)` : ''}` : ''
+    pr.member != null && pr.member !== pr.msrp ? `회원가 <span class="num">${won(pr.member)}</span>${pr.discount === MEMBER_DISCOUNT ? ` (게임패스 회원 기본 할인 ${MEMBER_DISCOUNT}%)` : pr.discount ? ` (${pr.discount}% 할인)` : ''}` : ''
   ].filter(Boolean).join(' → ') : '';
   const access = accessOf(g);
   const hh = handheldOf(g);
