@@ -1,0 +1,110 @@
+{
+  "_note": "테스트용 가짜 게임 목록. 실제 data/games.json과 무관하며, 점수 계산 규칙을 검사하려고 손으로 만들었다",
+  "rules": {
+    "steamBridge": {
+      "s:jrpg": "JRPG", "s:turnbased": "Turn-Based Combat", "s:actionrpg": "Action RPG", "s:srpg": "Strategy RPG",
+      "s:soulslike": "Souls-like", "s:metroidvania": "Metroidvania", "s:openworld": "Open World", "s:stylish": "Hack and Slash",
+      "t:explore": "Exploration", "t:story": "Story Rich", "t:combat": "Combat", "t:strategy": "Tactical", "t:growth": "RPG",
+      "t:collect": "Crafting", "t:survival": "Survival", "t:horror": "Horror", "t:puzzle": "Puzzle", "t:coop": "Co-op",
+      "t:roguelike": "Roguelike", "t:simulation": "Simulation", "t:racing": "Racing", "t:sports": "Sports", "t:emotional": "Emotional",
+      "t:mystery": "Mystery", "t:family": "Family Friendly", "t:shooter": "Shooter", "t:stealth": "Stealth", "t:music": "Great Soundtrack"
+    }
+  },
+  "games": [
+    {
+      "id": "ninja", "title": "칼날 폭풍", "genres": ["Action & adventure"], "styles": ["stylish"],
+      "tagW": { "combat": 1, "story": 0.5 },
+      "steamTags": { "Hack and Slash": 1, "Action": 0.95, "Character Action Game": 0.9, "Combat": 0.8, "Difficult": 0.7, "Story Rich": 0.3 },
+      "modes": ["single"], "content": { "flags": ["blood", "violence"] }, "publisher": "Pub A", "developer": "Dev Ninja"
+    },
+    {
+      "id": "slash", "title": "강철 베기", "genres": ["Action & adventure"], "styles": ["stylish"],
+      "tagW": { "combat": 1 },
+      "steamTags": { "Hack and Slash": 1, "Action": 1, "Combat": 0.9, "Beat 'em up": 0.8, "Fast-Paced": 0.7 },
+      "modes": ["single"], "content": { "flags": ["blood", "violence"] }, "publisher": "Pub B", "developer": "Dev Slash"
+    },
+    {
+      "id": "jrpg1", "title": "별의 노래", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 0.8, "emotional": 0.5, "combat": 0.25 },
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.95, "RPG": 0.9, "Story Rich": 0.9, "Anime": 0.8, "Party-Based RPG": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub J", "developer": "Dev J1"
+    },
+    {
+      "id": "jrpg2", "title": "푸른 왕관", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 0.8, "explore": 0.5 },
+      "steamTags": { "JRPG": 1, "RPG": 0.95, "Turn-Based Combat": 0.9, "Fantasy": 0.8, "Story Rich": 0.7, "Great Soundtrack": 0.6 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub J", "developer": "Dev J2"
+    },
+    {
+      "id": "jrpg3", "title": "작은 용사 (Steam 태그 없음)", "genres": ["Role playing"], "styles": ["jrpg", "turnbased"],
+      "tagW": { "story": 1, "growth": 1 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub K", "developer": "Dev K"
+    },
+    {
+      "id": "jrpgSteam", "title": "달빛 연대기 (Steam 태그만)", "genres": ["Role playing"], "styles": [],
+      "tagW": {},
+      "steamTags": { "JRPG": 1, "Turn-Based Combat": 0.9, "Story Rich": 0.85 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub L", "developer": "Dev L"
+    },
+    {
+      "id": "race1", "title": "질주 본능", "genres": ["Racing & flying"], "styles": [],
+      "tagW": { "racing": 1 },
+      "steamTags": { "Racing": 1, "Driving": 0.9, "Open World": 0.6, "Multiplayer": 0.5, "Sports": 0.3 },
+      "modes": ["single", "multi"], "content": { "flags": [] }, "publisher": "Pub R", "developer": "Dev R1"
+    },
+    {
+      "id": "race2", "title": "서킷 마스터", "genres": ["Racing & flying"], "styles": [],
+      "tagW": { "racing": 1 },
+      "steamTags": { "Racing": 1, "Driving": 0.95, "Realistic": 0.7, "Simulation": 0.6 },
+      "modes": ["single", "multi"], "content": { "flags": [] }, "publisher": "Pub R", "developer": "Dev R2"
+    },
+    {
+      "id": "sport", "title": "골든 골", "genres": ["Sports"], "styles": [],
+      "tagW": { "sports": 1 },
+      "steamTags": { "Sports": 1, "Football": 0.9, "Multiplayer": 0.7, "PvP": 0.6 },
+      "modes": ["multi"], "content": { "flags": [] }, "publisher": "Pub S", "developer": "Dev S"
+    },
+    {
+      "id": "horror1", "title": "검은 저택", "genres": ["Action & adventure", "Shooter"], "styles": [],
+      "tagW": { "horror": 1, "shooter": 0.8, "survival": 0.6 },
+      "steamTags": { "Survival Horror": 1, "Horror": 0.95, "Zombies": 0.8, "Third-Person Shooter": 0.7, "Atmospheric": 0.6 },
+      "modes": ["single"], "content": { "flags": ["blood", "gore", "violence", "horror"] }, "publisher": "Pub H", "developer": "Dev H"
+    },
+    {
+      "id": "horror2", "title": "검은 저택 2", "genres": ["Action & adventure", "Shooter"], "styles": [],
+      "tagW": { "horror": 1, "shooter": 0.7, "survival": 0.7 },
+      "steamTags": { "Survival Horror": 1, "Horror": 0.9, "Zombies": 0.85, "Third-Person Shooter": 0.6, "Atmospheric": 0.7 },
+      "modes": ["single"], "content": { "flags": ["blood", "gore", "violence", "horror"] }, "publisher": "Pub H", "developer": "Dev H2"
+    },
+    {
+      "id": "puzzle", "title": "조각 맞추기", "genres": ["Puzzle & trivia"], "styles": [],
+      "tagW": { "puzzle": 1, "family": 0.6 },
+      "steamTags": { "Puzzle": 1, "Relaxing": 0.8, "Family Friendly": 0.8, "Cute": 0.7 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub P", "developer": "Dev P"
+    },
+    {
+      "id": "farm", "title": "햇살 농장", "genres": ["Simulation"], "styles": [],
+      "tagW": { "simulation": 1, "collect": 0.6, "family": 0.5 },
+      "steamTags": { "Farming Sim": 1, "Life Sim": 0.9, "Relaxing": 0.8, "Crafting": 0.6, "Cute": 0.6 },
+      "modes": ["single", "coop"], "content": { "flags": [] }, "publisher": "Pub F", "developer": "Dev F"
+    },
+    {
+      "id": "strategy", "title": "제국의 지도", "genres": ["Strategy"], "styles": ["srpg"],
+      "tagW": { "strategy": 1 },
+      "steamTags": { "Turn-Based Strategy": 1, "Strategy": 1, "4X": 0.9 },
+      "modes": ["single", "multi"], "content": { "flags": [] }, "publisher": "Pub T", "developer": "Dev T"
+    },
+    {
+      "id": "metroid", "title": "지하 미로", "genres": ["Platformer"], "styles": ["metroidvania"],
+      "tagW": { "explore": 1, "combat": 0.6 },
+      "steamTags": { "Metroidvania": 1, "2D Platformer": 0.9, "Exploration": 0.8, "Difficult": 0.6 },
+      "modes": ["single"], "content": { "flags": [] }, "publisher": "Pub M", "developer": "Dev M"
+    },
+    {
+      "id": "cards", "title": "카드 술사", "genres": ["Card & board"], "styles": [],
+      "tagW": {},
+      "steamTags": { "Card Game": 1, "Deckbuilding": 0.9 },
+      "modes": ["single"], "content": { "flags": ["gambling", "language"] }, "publisher": "Pub Z", "developer": "Dev Z"
+    }
+  ]
+}

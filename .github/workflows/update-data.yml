@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  issues: write   # 검증 실패 시 "데이터 갱신 실패" 이슈를 열기 위해
 
 concurrency:
   group: update-data
@@ -33,6 +34,27 @@ jobs:
         shell: powershell
         run: ./scripts/build-data.ps1
 
+      # 메타크리틱 점수와 Steam 사용자 태그. data/steam.json에 쌓여 있어 새 게임과 30일 지난 게임만 묻는다
+      # Steam이 멈춰도 카탈로그 갱신은 계속되도록 수집 실패는 넘어가고, 재빌드는 그동안 쌓인 steam.json으로 한다
+      - name: Steam 정보 보강
+        continue-on-error: true
+        shell: powershell
+        run: ./scripts/fetch-steam.ps1
+
+      - name: Steam 정보 반영 (재빌드)
+        shell: powershell
+        run: ./scripts/build-data.ps1
+
+      # 게임패스 밖 게임을 취향 기준으로 넣을 때 쓰는 Steam 태그 사전. 목록 요청만 27분이 걸려 매주 월요일과 수동 실행 때만 돈다
+      # 결과 파일은 끝에 한 번만 쓰므로 중간에 실패하면 기존 external.json이 그대로 남는다
+      - name: 외부 게임 사전 갱신 (월요일·수동 실행)
+        continue-on-error: true
+        shell: powershell
+        run: |
+          if ((Get-Date).DayOfWeek -eq 'Monday' -or $env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            ./scripts/fetch-external.ps1 -PerTag 100
+          } else { Write-Host "월요일이 아니라 건너뜀" }
+
       - name: 한글패치 검색 (NAVER API 키가 있을 때만)
         if: env.NAVER_CLIENT_ID != ''
         shell: powershell
@@ -40,15 +62,65 @@ jobs:
           ./scripts/search-korean-patch.ps1
           ./scripts/build-data.ps1
 
+      # 비공식 API가 바뀌거나 수집이 반쪽으로 끝나면 여기서 멈춰 커밋하지 않는다 (이전 데이터가 그대로 배포됨)
+      - name: 데이터 검증
+        shell: powershell
+        run: ./scripts/validate-data.ps1 -PreviousRef HEAD
+
       - name: 바뀐 데이터 커밋
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data docs/data
+          git reset -q data/naver-cache 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "바뀐 데이터 없음"
           else
             git commit -m "데이터 갱신 $(date -u +%Y-%m-%d)"
             git push
           fi
+
+      # 갱신이 다시 성공하면 열려 있는 실패 이슈를 닫는다
+      - name: 실패 이슈 닫기
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = "데이터 갱신 실패";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100,
+            });
+            for (const i of issues.filter(i => !i.pull_request && i.title === title)) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: i.number, body: `다음 갱신이 성공해서 닫아요: ${runUrl}` });
+              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: i.number, state: "closed", state_reason: "completed" });
+            }
+
+      # 매일 도는 작업이라 실패를 놓치기 쉬워 이슈로 남긴다. 같은 제목의 열린 이슈가 있으면 댓글만 단다
+      - name: 실패 알림 이슈
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = "데이터 갱신 실패";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `데이터 갱신 워크플로가 실패해서 이번 데이터는 커밋하지 않았어요. 사이트는 이전 데이터를 그대로 보여 줘요.`,
+              ``,
+              `- 실행 기록: ${runUrl}`,
+              `- 시각(UTC): ${new Date().toISOString()}`,
+              ``,
+              `실행 기록의 "데이터 검증" 단계 요약에서 실패 항목을 확인하세요.`,
+            ].join("\n");
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100,
+            });
+            const open = issues.find(i => !i.pull_request && i.title === title);
+            if (open) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: open.number, body });
+            } else {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
+            }

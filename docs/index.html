@@ -5,132 +5,208 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>게임패스 큐레이터</title>
   <meta name="description" content="게임패스 게임을 내 취향, 한국어 지원, 요금제, 아이 옆 모드로 골라주는 추천 도구">
+  <meta name="theme-color" content="#0b0c0b">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <h1>게임패스 큐레이터</h1>
-      <p class="sub">좋아한 게임을 고르면 게임패스에서 할 만한 게임을 추천해요</p>
-    </div>
-    <div class="top-meta">
-      <span id="data-date" class="muted"></span>
-      <a class="link" href="https://github.com/" id="repo-link" target="_blank" rel="noopener">GitHub</a>
-    </div>
-  </header>
+  <div class="shell">
+    <aside class="side" aria-label="메뉴와 필터">
+      <div class="brand">
+        <img class="mark" src="icons/icon-192.png" alt="" width="36" height="36">
+        <div>
+          <b>게임패스 큐레이터</b>
+          <small id="data-date">불러오는 중</small>
+        </div>
+        <button type="button" class="side-toggle" id="side-toggle" aria-expanded="false" aria-controls="side-body">필터</button>
+      </div>
 
-  <div class="layout">
-    <aside class="filters" aria-label="필터">
-      <details open id="filter-box">
-        <summary>필터</summary>
+      <div class="side-body" id="side-body">
+        <nav class="nav" aria-label="보기">
+          <button type="button" class="nav-item active" data-tab="rec">추천</button>
+          <button type="button" class="nav-item" data-tab="all">전체 게임 <span id="all-count" class="nav-count"></span></button>
+          <button type="button" class="nav-item" data-tab="mine">내 목록 <span id="mine-count" class="nav-count"></span></button>
+          <button type="button" class="nav-item" data-tab="soon" id="soon-tab" hidden>곧 출시 <span id="soon-count" class="nav-count"></span></button>
+        </nav>
 
-        <label class="field">내 요금제
-          <select id="f-plan">
-            <option value="all">전체 게임패스</option>
-            <option value="naver">네이버플러스 (PC 게임패스)</option>
-            <option value="pcgp">PC Game Pass</option>
-            <option value="ultimate">Ultimate</option>
-            <option value="premium">Premium</option>
-            <option value="essential">Essential</option>
-          </select>
-        </label>
+        <div class="filters">
+          <label class="field">내 요금제
+            <select id="f-plan">
+              <option value="all">전체 게임패스</option>
+              <option value="naver">네이버플러스 (PC 게임패스)</option>
+              <option value="pcgp">PC Game Pass</option>
+              <option value="ultimate">Ultimate</option>
+              <option value="premium">Premium</option>
+              <option value="essential">Essential</option>
+            </select>
+          </label>
+          <label class="field">플랫폼
+            <select id="f-platform">
+              <option value="any">상관없음</option>
+              <option value="pc">PC</option>
+              <option value="console">콘솔</option>
+            </select>
+          </label>
+          <label class="field">한국어
+            <select id="f-korean">
+              <option value="playable">공식 + 한글패치 가능</option>
+              <option value="official">공식 한국어만</option>
+              <option value="all">전체</option>
+            </select>
+          </label>
 
-        <label class="field">플랫폼
-          <select id="f-platform">
-            <option value="any">상관없음</option>
-            <option value="pc">PC</option>
-            <option value="console">콘솔</option>
-          </select>
-        </label>
+          <label class="field">연령 등급 (게임물관리위원회)
+            <select id="f-age">
+              <option value="any">상관없음</option>
+              <option value="0">전체이용가만</option>
+              <option value="12">12세 이용가까지</option>
+              <option value="15">15세 이용가까지</option>
+            </select>
+          </label>
 
-        <label class="field">한국어
-          <select id="f-korean">
-            <option value="playable">한국어로 할 수 있는 게임 (공식 + 한글패치)</option>
-            <option value="official">공식 한국어만</option>
-            <option value="all">전체</option>
-          </select>
-        </label>
+          <label class="field" id="f-time-box" hidden>플레이타임 (메인 스토리)
+            <select id="f-time">
+              <option value="any">상관없음</option>
+              <option value="5">5시간 이하</option>
+              <option value="10">10시간 이하</option>
+              <option value="20">20시간 이하</option>
+              <option value="40">40시간 이하</option>
+            </select>
+          </label>
 
-        <fieldset class="field">
-          <legend>아이 옆 모드</legend>
-          <label class="check"><input type="checkbox" id="f-family"> 유혈·잔혹·강한 폭력·선정성·노출 빼기</label>
-          <label class="check"><input type="checkbox" id="f-nohorror"> 공포 요소 빼기</label>
-        </fieldset>
+          <fieldset class="field">
+            <legend>플레이 방식</legend>
+            <div class="chips" id="f-modes"></div>
+          </fieldset>
 
-        <fieldset class="field">
-          <legend>플레이 방식</legend>
-          <div class="chips" id="f-modes"></div>
-        </fieldset>
+          <fieldset class="field">
+            <legend>장르</legend>
+            <div class="chips" id="f-genres"></div>
+          </fieldset>
 
-        <fieldset class="field">
-          <legend>장르</legend>
-          <div class="chips" id="f-genres"></div>
-        </fieldset>
+          <fieldset class="field">
+            <legend>세부 장르 (추정)</legend>
+            <div class="chips" id="f-styles"></div>
+          </fieldset>
 
-        <fieldset class="field">
-          <legend>기타</legend>
-          <label class="check"><input type="checkbox" id="f-leaving"> 곧 종료되는 게임만</label>
-          <label class="check"><input type="checkbox" id="f-new"> 최근 추가된 게임만</label>
-          <label class="check"><input type="checkbox" id="f-hidedone" checked> 완료·포기한 게임 숨기기</label>
-        </fieldset>
+          <fieldset class="field" id="f-features-box" hidden>
+            <legend>기능 (모두 갖춘 게임만)</legend>
+            <div class="chips" id="f-features"></div>
+          </fieldset>
 
-        <button type="button" class="ghost" id="f-reset">필터 초기화</button>
-      </details>
+          <fieldset class="field">
+            <legend>게임패스</legend>
+            <label class="check"><input type="checkbox" id="f-leaving"> 곧 종료되는 게임만</label>
+            <label class="check"><input type="checkbox" id="f-new"> 최근 추가된 게임만</label>
+            <label class="check"><input type="checkbox" id="f-hidedone" checked> 완료·포기한 게임 숨기기</label>
+          </fieldset>
+
+          <button type="button" class="btn ghost wide" id="f-reset">필터 초기화</button>
+        </div>
+
+        <div class="side-foot">
+          <button type="button" class="btn primary wide" id="install" hidden>앱으로 설치</button>
+          <a href="https://github.com/" id="repo-link" target="_blank" rel="noopener">GitHub에서 보기</a>
+        </div>
+      </div>
     </aside>
 
-    <main>
-      <section class="taste" aria-labelledby="taste-title">
-        <div class="taste-head">
+    <main class="canvas">
+      <header class="title-row">
+        <div>
+          <h1 id="page-title">추천</h1>
+          <p id="summary" class="lead"></p>
+        </div>
+        <div class="title-tools">
+        <input type="search" id="q" class="q" placeholder="제목으로 찾기" aria-label="제목으로 찾기" hidden>
+        <button type="button" class="btn" id="f-quick" aria-pressed="false" title="한 판이 짧거나 일시 중지가 되는 게임만">짧게 끊어 하기</button>
+        <label class="sort" id="sort-box">정렬
+          <select id="f-sort">
+            <option value="score">추천순</option>
+            <option value="meta">메타스코어순</option>
+            <option value="rating">스토어 평점순</option>
+            <option value="short">짧은 순</option>
+            <option value="added">최근 추가순</option>
+            <option value="new">출시일 최신순</option>
+            <option value="old">출시일 오래된순</option>
+            <option value="title">이름 가나다순 (A-Z)</option>
+            <option value="titleDesc">이름 역순 (Z-A)</option>
+          </select>
+        </label>
+        </div>
+      </header>
+
+      <div class="alert" id="alert" role="status" hidden></div>
+
+      <section class="panel taste" id="taste" aria-labelledby="taste-title">
+        <div class="panel-head">
           <h2 id="taste-title">내 취향</h2>
-          <div class="taste-actions">
-            <button type="button" class="ghost" id="t-example">예시 취향 불러오기</button>
-            <button type="button" class="ghost" id="t-share">취향 링크 복사</button>
-            <button type="button" class="ghost" id="t-clear">비우기</button>
+          <div class="row-actions">
+            <button type="button" class="btn ghost" id="t-example">예시 취향</button>
+            <button type="button" class="btn ghost" id="t-share">취향 링크 복사</button>
+            <button type="button" class="btn ghost" id="t-clear">비우기</button>
           </div>
         </div>
 
         <div class="search-wrap">
-          <input type="search" id="t-search" placeholder="재미있게 한 게임을 검색해 추가하세요 (예: 헤일로)" autocomplete="off" aria-label="게임 검색">
-          <ul class="suggest" id="t-suggest" role="listbox" hidden></ul>
+          <input type="search" id="t-search" placeholder="재미있게 한 게임 (게임패스에 없어도, PS·스위치 게임이어도 돼요)" autocomplete="off" aria-label="게임 검색">
+          <div class="suggest" id="t-suggest" hidden></div>
         </div>
+
         <div class="anchors" id="t-anchors"></div>
 
-        <p class="hint">좋아하는 요소를 한 번 누르면 <b class="like-c">좋아요</b>, 두 번 누르면 <b class="dislike-c">별로예요</b>예요. 게임패스에 없는 인생 게임은 요소로 표현해 주세요.</p>
-        <div class="chips" id="t-keywords"></div>
+        <div class="taste-keys">
+          <p class="hint">좋아하는 요소는 한 번 눌러 <b class="like-c">좋아요</b>, 두 번 누르면 <b class="dislike-c">별로예요</b>. 기준 게임을 누르면 그 게임에서 좋았던 점만 고를 수 있어요.</p>
+          <div class="chips" id="t-keywords"></div>
+        </div>
       </section>
 
-      <nav class="tabs" aria-label="보기">
-        <button type="button" class="tab active" data-tab="rec">추천</button>
-        <button type="button" class="tab" data-tab="mine">내 목록 <span id="mine-count" class="count"></span></button>
-        <div class="sort">
-          <label>정렬
-            <select id="f-sort">
-              <option value="score">추천순</option>
-              <option value="rating">스토어 평점순</option>
-              <option value="new">최신 출시순</option>
-              <option value="title">이름순</option>
-            </select>
-          </label>
-        </div>
-      </nav>
+      <section id="pick" class="pick" aria-label="1순위 추천"></section>
 
-      <p id="summary" class="summary"></p>
-      <div id="grid" class="grid" aria-live="polite"></div>
-      <div class="more-wrap"><button type="button" id="more" class="ghost" hidden>더 보기</button></div>
+      <section aria-label="게임 목록">
+        <div id="grid" class="grid" aria-live="polite"></div>
+        <div class="more-wrap">
+          <button type="button" id="more" class="btn ghost" hidden>더 보기</button>
+          <button type="button" id="far" class="btn ghost" hidden></button>
+        </div>
+        <details class="left-box" id="left" hidden>
+          <summary>최근에 빠진 게임 <span id="left-count" class="nav-count"></span></summary>
+          <ul class="left-list" id="left-list"></ul>
+        </details>
+      </section>
 
       <footer class="foot">
-        <p>게임 목록과 정보는 Microsoft 스토어의 비공식 API에서 가져왔고, 한글패치 정보는 네이버 검색으로 찾은 <b>추정</b>이에요. 실제 적용 여부는 근거 글에서 꼭 확인하세요.</p>
-        <p>이 사이트는 Microsoft·Xbox·네이버와 관계없는 오픈소스 프로젝트예요.</p>
+        <p>게임 목록과 정보는 Microsoft 스토어의 비공식 API에서 가져왔고, 특징·세부 장르·한글패치는 <b>추정</b>이에요. 한글패치는 근거 글에서 꼭 확인하세요.</p>
+        <p>Microsoft·Xbox·네이버와 관계없는 개인 오픈소스 프로젝트예요.</p>
       </footer>
     </main>
   </div>
 
   <dialog id="detail" aria-labelledby="d-title">
-    <div class="d-body" id="d-body"></div>
-    <form method="dialog"><button class="ghost d-close" aria-label="닫기">닫기</button></form>
+    <div id="d-body"></div>
+    <form method="dialog" class="d-close-row"><button class="btn ghost">닫기</button></form>
+  </dialog>
+
+  <dialog id="aspect" aria-labelledby="a-title">
+    <div id="a-body"></div>
+    <div class="d-close-row">
+      <button type="button" class="btn ghost" id="a-all">전부 좋았어요</button>
+      <button type="button" class="btn primary" id="a-done">적용</button>
+    </div>
+  </dialog>
+
+  <dialog id="custom" aria-labelledby="c-title">
+    <div id="c-body"></div>
+    <div class="d-close-row">
+      <button type="button" class="btn ghost" id="c-cancel">취소</button>
+      <button type="button" class="btn primary" id="c-save">추가</button>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>
+  <script src="recommend.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -6,3 +6,10 @@ Thumbs.db
 .DS_Store
 *.log
 .vscode/
+
+# 개인 Claude Code 설정과 내려받은 디자인 스킬
+.claude/
+
+# 데스크톱 앱 빌드 결과물·캐시
+dist/
+app/.build/

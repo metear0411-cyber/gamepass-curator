@@ -1,0 +1,27 @@
+name: 데스크톱 앱 릴리스
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: exe 빌드
+        run: ./scripts/build-exe.ps1 -Version "${{ github.ref_name }}"
+
+      - name: GitHub Release에 올리기
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/GamepassCurator-win-x64.zip
+          generate_release_notes: true

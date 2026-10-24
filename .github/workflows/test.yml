@@ -1,0 +1,16 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # 추천 엔진(docs/recommend.js) 회귀 테스트. 설치할 패키지 없음
+      - run: node tests/recommend.test.mjs

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>추천 엔진 테스트</title>
+  <style>
+    body { font: 14px/1.6 system-ui, sans-serif; margin: 24px; background: #fff; color: #111; }
+    .pass { color: #0a7d32; } .fail { color: #b3261e; }
+    pre { white-space: pre-wrap; margin: 0 0 0 3.5em; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>추천 엔진 테스트</h1>
+  <p>저장소 최상위를 정적 서버로 띄우고 /tests/run.html을 열어야 해요 (file://로는 fixture.json을 읽지 못해요).</p>
+  <div id="out">돌리는 중…</div>
+  <script src="../docs/recommend.js"></script>
+  <script src="cases.js"></script>
+  <script>
+    (async () => {
+      const out = document.getElementById('out');
+      try {
+        const fixture = await (await fetch('fixture.json')).json();
+        const results = RecommendCases.run(Recommend, fixture, RecommendCases.simpleAssert);
+        const failed = results.filter((r) => !r.ok).length;
+        out.innerHTML = results.map((r) => `<div class="${r.ok ? 'pass' : 'fail'}">${r.ok ? 'PASS' : 'FAIL'} ${r.name}</div>` +
+          (r.ok ? '' : `<pre>${r.error.replace(/</g, '&lt;')}</pre>`)).join('') +
+          `<p><b>${results.length - failed}/${results.length} 통과</b></p>`;
+        document.title = failed ? `실패 ${failed}개` : '모두 통과';
+      } catch (e) {
+        out.textContent = '테스트를 돌리지 못했어요: ' + e.message;
+      }
+    })();
+  </script>
+</body>
+</html>
