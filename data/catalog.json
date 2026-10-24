@@ -5719,9 +5719,7 @@
         "releaseDate":  "2021-02-02",
         "korean":  "yes",
         "tiers":  [
-                      "ultimate/console",
-                      "premium/console",
-                      "essential/console"
+                      "ultimate/console"
                   ],
         "installClass":  "console",
         "publisher":  "Remedy Entertainment Plc."
