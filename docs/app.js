@@ -284,6 +284,9 @@ function reasonsFor(g, prof) {
   if (x.dislikedLike) out.push({ cls: 'neg', text: `별로였던 「${gameOf(x.dislikedLike).title}」와 닮은 점이 많아요` });
   const warn = g.content.flags.filter((x) => WARN_FLAGS.includes(x));
   if (warn.length) out.push({ cls: 'warn', text: `${warn.map((x) => CONTENT[x]).join('·')} 표현이 있어요 (등급 기관 표기)` });
+  // 게임할 시간이 부족한 사람 기준: 플레이타임 필터를 안 걸었으면 긴 게임은 미리 알린다
+  const main = hoursOf(g);
+  if (main != null && main > 40 && S.f.time === 'any') out.push({ cls: 'warn', text: `메인 스토리만 약 ${Math.round(main)}시간이라 시간이 부족하면 길 수 있어요` });
   if (g.leavingSoon) out.push({ cls: 'warn', text: '곧 게임패스에서 빠져요' });
   if (g.leavingSoon && (priceOf(g) || {}).discount) out.push({ cls: 'warn', text: '곧 빠지는데 회원 할인 중이에요' });
   if (g.korean.status === 'patch') out.push({ cls: 'warn', text: '한국어는 유저 한글패치로 (검색 추정, 근거 확인 필요)' });
@@ -687,7 +690,7 @@ function renderTaste() {
   $('#t-anchors').innerHTML = Object.entries(S.anchors).map(([id, a]) => {
     const g = gameOf(id);
     if (!g) return '';
-    const sub = a.aspects && a.aspects.length ? `좋았던 점: ${a.aspects.slice(0, 3).map(featureLabel).join('·')}${a.aspects.length > 3 ? ' 외' : ''}`
+    const sub = a.aspects && a.aspects.length ? `${a.kind === 'dislike' ? '별로였던' : '좋았던'} 점: ${a.aspects.slice(0, 3).map(featureLabel).join('·')}${a.aspects.length > 3 ? ' 외' : ''}`
       : (g.external ? extSource(g) || '게임패스 밖 게임' : '전부 반영');
     // 좋았던 점 고르기는 버튼이라 키보드로도 열린다
     return `<span class="anchor ${a.kind}">
@@ -1411,7 +1414,19 @@ async function resolveExample({ ko, en }) {
 }
 
 // 프로젝트를 만든 사람의 취향 예시. 진 여신전생 V 벤전스·위쳐 3·페르소나 3 리로드는 Steam 태그 자료·스토어·위키데이터에서 불러오고,
-// 닌자 가이덴 4는 전투만 좋았던 것으로 둔다. 페르소나 5 로열(긴 일상 파트가 루즈)은 JRPG·턴제 자체를 깎게 되므로 넣지 않는다
+// 닌자 가이덴 4는 전투만 좋았던 것으로 둔다.
+// 페르소나 3 리로드는 "엔딩의 희생과 감정적 여운"이 좋았으므로 그 결의 태그만 남긴다 (3 리로드에도 연애 시뮬·비주얼 노벨 태그가 붙어 있다).
+// 페르소나 5 로열은 "대화와 일상이 길어 루즈"했으므로 별로로 넣되 연애 시뮬·비주얼 노벨만 깎는다 (JRPG·턴제까지 깎지 않게)
+const EXAMPLE_ASPECTS = {
+  p3r: ['k:JRPG', 'k:Emotional', 'k:Story Rich', 'k:Dark', 'k:Party-Based RPG', 'k:Turn-Based Strategy', 'k:Turn-Based Combat', 's:jrpg', 's:turnbased', 't:emotional'],
+  p5rDislike: ['k:Dating Sim', 'k:Visual Novel', 'k:Life Sim', 'k:Time Management']
+};
+function onlyAspects(g, wanted) {
+  const has = featureKeys(g);
+  const a = wanted.filter((k) => has[k]);
+  return a.length ? a : null;
+}
+
 async function loadExample() {
   S.anchors = {}; S.keywords = { 's:jrpg': 1, 's:turnbased': 1, 't:explore': 1, 't:story': 1, 't:collect': 1, 't:growth': 1, 't:emotional': 1, 't:mystery': 1, 't:music': 1 };
   S.f.age = '15';
@@ -1420,14 +1435,23 @@ async function loadExample() {
   const wants = [
     { ko: '진 여신전생 V Vengeance', en: 'Shin Megami Tensei V: Vengeance' },
     { ko: '위쳐 3', en: 'The Witcher 3: Wild Hunt' },
-    { ko: '페르소나 3 리로드', en: 'Persona 3 Reload' }
+    { ko: '페르소나 3 리로드', en: 'Persona 3 Reload', only: EXAMPLE_ASPECTS.p3r, note: '여운·스토리만' },
+    { ko: '페르소나 5 더 로열', en: 'Persona 5 Royal', only: EXAMPLE_ASPECTS.p5rDislike, dislike: true, note: '별로: 긴 일상·대화' }
   ];
   const got = [];
   await loadExternal();
   for (const w of wants) {
     try {
       const g = await resolveExample(w);
-      if (g) got.push(g.title);
+      if (!g) continue;
+      const a = S.anchors[g.id];
+      if (a && w.only) a.aspects = onlyAspects(g, w.only);
+      if (a && w.dislike) {
+        // 별로인 점을 하나도 못 찾으면(태그가 없으면) JRPG까지 깎게 되므로 넣지 않는다
+        if (!a.aspects) { delete S.anchors[g.id]; continue; }
+        a.kind = 'dislike';
+      }
+      got.push(g.title + (w.note ? ` (${w.note})` : ''));
     } catch (e) { /* 한 게임을 못 찾아도 나머지는 진행 */ }
   }
   const ng = S.games.find((g) => /ninja gaiden 4|닌자\s*가이덴\s*4/i.test(g.title));
