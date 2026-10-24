@@ -91,6 +91,7 @@ const STORE_KEY = 'gpc-state-v2';
 const PAGE = 48;
 // 점수 계산(특성 무게·IDF·유사도)은 recommend.js에 있다. 여기는 화면과 상태만
 const MIN_SCORE = Recommend.MIN_SCORE;   // 이보다 낮으면 "취향과 거리가 먼 게임"으로 따로 접는다
+let canMix = false;   // 지금 화면에 골고루 섞기가 걸리는지 (추천 탭 · 취향 점수 있음 · 추천순). render가 정한다
 
 // ---------- 상태 ----------
 
@@ -111,7 +112,8 @@ const S = {
 
 function defaultFilters() {
   return { plan: 'all', platform: 'any', korean: 'playable', age: 'any', time: 'any',
-           modes: [], genres: [], styles: [], features: [], leaving: false, fresh: false, hidedone: true, quick: false, sort: 'score' };
+           modes: [], genres: [], styles: [], features: [], leaving: false, fresh: false, hidedone: true, quick: false, sort: 'score',
+           mix: true };   // 추천순에서 비슷한 게임(같은 시리즈 등)이 몰리지 않게 섞기
 }
 
 // 브라우저 저장소는 막혀 있을 수 있어(사생활 보호 모드 등) 항상 try로 감싼다
@@ -132,6 +134,7 @@ function normFilters(raw) {
   for (const k of ['modes', 'genres', 'styles', 'features']) f[k] = Array.isArray(f[k]) ? f[k].filter((x) => typeof x === 'string') : [];
   for (const k of ['leaving', 'fresh', 'quick']) f[k] = f[k] === true;
   f.hidedone = f.hidedone !== false;
+  f.mix = f.mix !== false;
   return f;
 }
 
@@ -502,10 +505,12 @@ function render() {
   if (S.tab !== 'mine') sortList(list, scores);
 
   let pick = null; let far = [];
-  if (S.tab === 'rec' && scores && S.f.sort === 'score') {
-    // 접기는 원래 점수로 하고, 보이는 쪽만 한 시리즈가 몰리지 않게 순서를 섞는다 (숫자는 원래 점수 그대로)
+  canMix = S.tab === 'rec' && !!scores && S.f.sort === 'score';
+  if (canMix) {
+    // 접기는 원래 점수로 하고, 보이는 쪽만 한 시리즈가 몰리지 않게 순서를 섞는다 (숫자는 원래 점수 그대로).
+    // 섞기를 끄면 점수 순서 그대로
     ({ near: list, far } = Recommend.fold(list, scores, MIN_SCORE));
-    list = E.diversify(list, scores);
+    list = E.diversify(list, scores, { diversity: S.f.mix });
     pick = list.shift() || null;
   }
 
@@ -535,13 +540,15 @@ function render() {
   // 추천순이 아니면 거리가 먼 게임을 접지 않으므로 "조건에 맞는"으로 말한다
   const sortName = S.f.sort === 'score' ? (prof.empty ? '스토어 평점순' : '') : ($('#f-sort').selectedOptions[0]?.text || '');
   const timeNote = (S.f.quick ? ' · 짧게 끊어 하기 모드' : '') + (S.f.time !== 'any' ? ' · 플레이타임 정보가 있는 게임만' : '');
+  const mixNote = canMix && S.f.mix ? ' · 비슷한 게임이 몰리지 않게 섞었어요' : '';
   const lead = {
-    rec: (sortName ? `조건에 맞는 ${total}개 · ${sortName}` : `취향에 맞는 ${total}개${far.length ? ` · 거리가 먼 ${far.length}개는 접어 뒀어요` : ''}`) + timeNote,
+    rec: (sortName ? `조건에 맞는 ${total}개 · ${sortName}` : `취향에 맞는 ${total}개${far.length ? ` · 거리가 먼 ${far.length}개는 접어 뒀어요` : ''}`) + timeNote + mixNote,
     all: `지금 게임패스에 있는 게임 중 조건에 맞는 ${list.length}개${scores ? ' · 숫자는 내 취향 점수' : ''}${timeNote}`,
     mine: `${list.length}개 · 관심, 플레이 중, 완료, 포기 순`
   };
   // 결과가 적은 까닭이 필터라면 그렇다고 말해 준다
-  const few = S.tab !== 'mine' && (S.tab === 'rec' ? total : list.length) < 5 && activeFilters().length;
+  // (섞기 끔은 개수와 상관없어 세지 않는다)
+  const few = S.tab !== 'mine' && (S.tab === 'rec' ? total : list.length) < 5 && activeFilters().some((x) => x.id !== 'mix');
   renderChrome(lead[S.tab] + (few ? ' · 필터 때문에 적게 보여요' : ''));
 }
 
@@ -554,6 +561,7 @@ function renderSoon(soon) {
     '<div class="empty">찾는 게임이 없어요.</div>';
   $('#more').hidden = list.length <= S.shown;
   $('#far').hidden = true;
+  canMix = false;
   renderChrome(`게임패스에 곧 들어오는 게임 ${list.length}개 · 추가 날짜는 Microsoft가 공개하지 않아요`);
 }
 
@@ -569,6 +577,10 @@ function renderChrome(summary) {
   $('#f-quick').hidden = S.tab === 'mine' || S.tab === 'soon';
   $('#f-quick').classList.toggle('on', S.f.quick);
   $('#f-quick').setAttribute('aria-pressed', String(S.f.quick));
+  // 골고루 섞기: 취향 점수로 추천순일 때만 (render가 canMix를 정한다)
+  $('#f-mix').hidden = !canMix;
+  $('#f-mix').classList.toggle('on', S.f.mix);
+  $('#f-mix').setAttribute('aria-pressed', String(S.f.mix));
   renderAlert();
   renderLeft();
   // 내 목록 개수: 보여 줄 수 있는 것만 (데이터에서 사라진 게임은 세지 않는다)
@@ -605,6 +617,8 @@ function activeFilters(tab = S.tab) {
     if (f.leaving) out.push({ id: 'leaving', label: '곧 종료만' });
     if (f.fresh) out.push({ id: 'fresh', label: '최근 추가만' });
     if (!f.hidedone && tab === 'rec') out.push({ id: 'hidedone', label: '완료·포기도 보기' });
+    // 섞기는 기본이 켜짐이라 껐을 때만, 그것도 섞기가 걸리는 추천순에서만
+    if (!f.mix && tab === 'rec' && f.sort === 'score') out.push({ id: 'mix', label: '섞기 끔' });
   }
   // 추천 탭에는 검색칸이 없지만 다른 탭에서 넣은 검색어도 걸리므로 알린다
   if (q) out.push({ id: 'q', label: `검색: ${q}` });
@@ -1533,6 +1547,7 @@ function bind() {
   $('#f-reset').addEventListener('click', () => { S.f = defaultFilters(); syncFilterInputs(); S.shown = PAGE; render(); });
   $('#q').addEventListener('input', (e) => { S.q = e.target.value; S.shown = PAGE; render(); });
   $('#f-quick').addEventListener('click', () => { S.f.quick = !S.f.quick; S.shown = PAGE; render(); });
+  $('#f-mix').addEventListener('click', () => { S.f.mix = !S.f.mix; S.shown = PAGE; render(); });
   // 곧 빠지는 게임 알림: 제목을 누르면 상세, 닫기는 이 게임 묶음을 기억한다
   $('#alert').addEventListener('click', (e) => {
     const open = e.target.closest('[data-open]');

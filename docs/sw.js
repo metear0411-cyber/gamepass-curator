@@ -1,5 +1,5 @@
 // 오프라인에서도 열리도록: 화면 파일은 캐시 우선, 게임 데이터는 네트워크 우선(실패하면 마지막으로 받은 것)
-const CACHE = 'gpc-v11';   // 화면 파일을 바꾸면 올린다 (캐시 우선이라 안 올리면 예전 화면이 한 번 더 뜬다)
+const CACHE = 'gpc-v12';   // 화면 파일을 바꾸면 올린다 (캐시 우선이라 안 올리면 예전 화면이 한 번 더 뜬다)
 const SHELL = ['./', 'index.html', 'style.css', 'recommend.js', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

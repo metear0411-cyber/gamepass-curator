@@ -1,0 +1,78 @@
+# 외부 게임 사전 시드: 보유자 수 순위에 안 들어도 사전에 꼭 넣을 게임 목록. 누구나 PR로 추가할 수 있다.
+# 한 줄에 하나씩, Steam appid(숫자) 또는 Steam 상점의 영어 제목. '#' 뒤는 주석.
+# 제목은 Steam 검색으로 appid를 찾는다(정확히 같은 이름 우선, 없으면 그 이름으로 시작하는 첫 결과).
+# 못 찾으면 scripts/fetch-external.ps1 실행 끝에 노란 글씨로 알려 준다 -> appid로 바꿔 적으면 된다.
+
+# 아틀러스
+Shin Megami Tensei V: Vengeance
+Shin Megami Tensei III Nocturne HD Remaster
+Persona 5 Royal
+Persona 4 Golden
+Persona 3 Reload
+Metaphor: ReFantazio
+# Unicorn Overlord   # Steam 미출시라 검색 실패 -> 나오면 주석 해제
+
+# 용과 같이
+638970   # Yakuza 0 원판 (제목 검색은 아직 태그 없는 Director's Cut으로 간다)
+Yakuza: Like a Dragon
+Like a Dragon: Infinite Wealth
+Like a Dragon Gaiden: The Man Who Erased His Name
+
+# 스퀘어 에닉스
+Dragon Quest XI S: Echoes of an Elusive Age - Definitive Edition
+Octopath Traveler
+Octopath Traveler II
+Triangle Strategy
+Final Fantasy VII Remake Intergrade
+Final Fantasy XVI
+Final Fantasy X/X-2 HD Remaster
+NieR:Automata
+NieR Replicant ver.1.22474487139...
+
+# 반다이 남코·기타 JRPG
+Tales of Arise
+Tales of Berseria
+1999770   # Atelier Ryza 3 원판 (제목 검색은 태그 없는 DX판으로 간다)
+The Legend of Heroes: Trails of Cold Steel
+The Legend of Heroes: Trails through Daybreak
+Ys VIII: Lacrimosa of DANA
+Ys X: Nordics
+Sea of Stars
+Chained Echoes
+Clair Obscur: Expedition 33
+
+# 액션
+Dragon's Dogma 2
+Monster Hunter Rise
+Elden Ring
+Sekiro: Shadows Die Twice
+Dark Souls III
+Lies of P
+Nioh 2 - The Complete Edition
+Ninja Gaiden 2 Black
+Devil May Cry 5
+Bayonetta
+Metal Gear Rising: Revengeance
+God of War
+Horizon Zero Dawn Remastered
+Ghost of Tsushima Director's Cut
+Red Dead Redemption 2
+
+# 서양 RPG
+Disco Elysium
+Baldur's Gate 3
+Divinity: Original Sin 2
+Pillars of Eternity II: Deadfire
+The Witcher 3: Wild Hunt
+Cyberpunk 2077
+Mass Effect Legendary Edition
+Dragon Age: The Veilguard
+Kingdom Come: Deliverance II
+
+# 인디
+Hades
+Hades II
+Undertale
+Hollow Knight
+Ori and the Will of the Wisps
+Stardew Valley
