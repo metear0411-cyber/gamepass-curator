@@ -3077,6 +3077,19 @@
         "publisher":  "Xbox Game Studios"
     },
     {
+        "id":  "9NK039GWVTVC",
+        "title":  "Scramble Knights Online (Game Preview)",
+        "releaseDate":  "2025-12-10",
+        "korean":  "no",
+        "tiers":  [
+                      "ultimate/pc",
+                      "ultimate/console",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "accessible",
+        "publisher":  "Funktronic Labs"
+    },
+    {
         "id":  "9NK13T4QFPQW",
         "title":  "Xbox One용 EA SPORTS FC™ 26",
         "releaseDate":  "9998-12-30",
