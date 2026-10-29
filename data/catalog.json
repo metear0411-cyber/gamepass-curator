@@ -2836,6 +2836,18 @@
         "publisher":  "rokaplay"
     },
     {
+        "id":  "9NGP0DJVKSFL",
+        "title":  "Plants vs. Zombies™: Replanted - PC",
+        "releaseDate":  "9998-12-30",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/pc",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "launcher",
+        "publisher":  "Electronic Arts"
+    },
+    {
         "id":  "9NH019ZFFHTV",
         "title":  "Car Mechanic Simulator 2021",
         "releaseDate":  "2023-06-01",
@@ -4219,6 +4231,21 @@
         "publisher":  "tinyBuild"
     },
     {
+        "id":  "9NRQVQ7ZRM7Z",
+        "title":  "FINAL FANTASY VII REMAKE INTERGRADE",
+        "releaseDate":  "2026-01-22",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/pc",
+                      "ultimate/console",
+                      "premium/pc",
+                      "premium/console",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "accessible",
+        "publisher":  "SQUARE ENIX"
+    },
+    {
         "id":  "9NRTXWCZ2ZJ0",
         "title":  "식물 vs. 좀비™: 네이버빌의 대난투 디럭스 에디션",
         "releaseDate":  "2019-10-17",
@@ -4887,7 +4914,7 @@
                       "pcgp/pc"
                   ],
         "installClass":  "accessible",
-        "publisher":  "The Arcade Crew"
+        "publisher":  "Dotemu"
     },
     {
         "id":  "9NXWKGRHT31F",
@@ -7268,6 +7295,17 @@
         "publisher":  "Electronic Arts"
     },
     {
+        "id":  "9PGSDFM3JD85",
+        "title":  "Plants vs. Zombies™: Replanted",
+        "releaseDate":  "2025-10-23",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/console"
+                  ],
+        "installClass":  "console",
+        "publisher":  "Electronic Arts"
+    },
+    {
         "id":  "9PGVZ5XPQ9SP",
         "title":  "EA SPORTS™ Madden NFL 26",
         "releaseDate":  "9998-12-30",
@@ -7719,6 +7757,19 @@
                   ],
         "installClass":  "accessible",
         "publisher":  "Nacon"
+    },
+    {
+        "id":  "9PKFL1XJT73S",
+        "title":  "Terrible Lizards",
+        "releaseDate":  "2026-10-29",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/pc",
+                      "ultimate/console",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "accessible",
+        "publisher":  "Digital Pajamas"
     },
     {
         "id":  "9PKJ0532DTCW",
