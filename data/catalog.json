@@ -450,21 +450,6 @@
         "publisher":  "Bethesda Softworks"
     },
     {
-        "id":  "9MXWL7VJ2SJW",
-        "title":  "Dead Static Drive",
-        "releaseDate":  "2025-11-05",
-        "korean":  "no",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Reuben Games"
-    },
-    {
         "id":  "9MZ1RZTJTZKB",
         "title":  "콜 오브 듀티®: 블랙 옵스 6 - 스탠다드 에디션 (Windows)",
         "releaseDate":  "2026-07-07",
@@ -1437,21 +1422,6 @@
                   ],
         "installClass":  "console",
         "publisher":  "Paradox Interactive"
-    },
-    {
-        "id":  "9N6VS1BMZ3BW",
-        "title":  "와일드 게이트",
-        "releaseDate":  "2025-07-22",
-        "korean":  "yes",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Dreamhaven, Inc."
     },
     {
         "id":  "9N6WN0ZHZQ6W",
@@ -3273,21 +3243,6 @@
         "publisher":  "Doborog Games"
     },
     {
-        "id":  "9NKK6CX54183",
-        "title":  "Day of the Tentacle Remastered",
-        "releaseDate":  "2020-10-29",
-        "korean":  "no",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Xbox Game Studios"
-    },
-    {
         "id":  "9NKV34XDW014",
         "title":  "Palworld / 팰월드",
         "releaseDate":  "2024-01-19",
@@ -4728,21 +4683,6 @@
         "publisher":  "Electronic Arts"
     },
     {
-        "id":  "9NWQ686JB33G",
-        "title":  "Wartales",
-        "releaseDate":  "2023-10-31",
-        "korean":  "no",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Shiro Games"
-    },
-    {
         "id":  "9NWS5S7ZGD9T",
         "title":  "우노\u0027",
         "releaseDate":  "2016-08-16",
@@ -5643,23 +5583,6 @@
                   ],
         "installClass":  "launcher",
         "publisher":  "Electronic Arts"
-    },
-    {
-        "id":  "9P3ZRGNQVC7D",
-        "title":  "Full Throttle Remastered",
-        "releaseDate":  "2020-10-29",
-        "korean":  "no",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "essential/pc",
-                      "essential/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Xbox Game Studios"
     },
     {
         "id":  "9P402RWR63H4",
@@ -8844,21 +8767,6 @@
         "publisher":  "Bethesda Softworks"
     },
     {
-        "id":  "BRMKDCZT0C4L",
-        "title":  "LEGO® Star Wars™: 스카이워커 사가",
-        "releaseDate":  "9998-12-30",
-        "korean":  "yes",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Warner Bros. Games"
-    },
-    {
         "id":  "BRN6BHDHB58J",
         "title":  "Battlefield 3™",
         "releaseDate":  "2011-10-25",
@@ -10184,21 +10092,6 @@
                   ],
         "installClass":  "console",
         "publisher":  "Ubisoft"
-    },
-    {
-        "id":  "C3553MB4P5TT",
-        "title":  "Lara Croft and the Temple of Osiris",
-        "releaseDate":  "2014-12-09",
-        "korean":  "no",
-        "tiers":  [
-                      "ultimate/pc",
-                      "ultimate/console",
-                      "premium/pc",
-                      "premium/console",
-                      "pcgp/pc"
-                  ],
-        "installClass":  "accessible",
-        "publisher":  "Crystal Dynamics"
     },
     {
         "id":  "C355T88BBX1S",
