@@ -245,6 +245,21 @@
         "publisher":  "Secret Mode"
     },
     {
+        "id":  "9MW4MFG0192L",
+        "title":  "PIT OF GOBLIN",
+        "releaseDate":  "2026-11-03",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/pc",
+                      "ultimate/console",
+                      "premium/pc",
+                      "premium/console",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "accessible",
+        "publisher":  "Friendly Foe, Bright Gambit"
+    },
+    {
         "id":  "9MW4RJDRSF78",
         "title":  "Dishonored 2",
         "releaseDate":  "2019-10-03",
@@ -1150,6 +1165,18 @@
                   ],
         "installClass":  "accessible",
         "publisher":  "Focus Entertainment"
+    },
+    {
+        "id":  "9N4NKMXDZCX6",
+        "title":  "Football Manager 27",
+        "releaseDate":  "2026-11-10",
+        "korean":  "yes",
+        "tiers":  [
+                      "ultimate/pc",
+                      "pcgp/pc"
+                  ],
+        "installClass":  "accessible",
+        "publisher":  "SEGA"
     },
     {
         "id":  "9N4PT8HGCDHQ",

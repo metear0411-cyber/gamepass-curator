@@ -411,6 +411,35 @@
                                   },
                          "checkedAt":  "2026-10-24"
                      },
+    "9MW4MFG0192L":  {
+                         "appid":  3253530,
+                         "name":  "PIT OF GOBLIN",
+                         "metacritic":  null,
+                         "metacriticUrl":  null,
+                         "tags":  {
+                                      "Early Access":  768,
+                                      "3D":  698,
+                                      "Loot":  615,
+                                      "PvE":  547,
+                                      "Horror":  545,
+                                      "Co-op":  530,
+                                      "Multiplayer":  528,
+                                      "Exploration":  518,
+                                      "Jump Scare":  511,
+                                      "Action":  509,
+                                      "Fantasy":  507,
+                                      "Dark Fantasy":  505,
+                                      "Survival Horror":  501,
+                                      "First-Person":  496,
+                                      "Online Co-Op":  491,
+                                      "Adventure":  487,
+                                      "Action-Adventure":  484,
+                                      "3D Platformer":  472,
+                                      "Character Customization":  456,
+                                      "Atmospheric":  443
+                                  },
+                         "checkedAt":  "2026-11-03"
+                     },
     "9MW4RJDRSF78":  {
                          "appid":  403640,
                          "name":  "Dishonored 2",
@@ -1783,6 +1812,14 @@
                                       "Controller":  146
                                   },
                          "checkedAt":  "2026-10-24"
+                     },
+    "9N4NKMXDZCX6":  {
+                         "appid":  4530370,
+                         "name":  "Football Manager 27",
+                         "metacritic":  null,
+                         "metacriticUrl":  null,
+                         "tags":  null,
+                         "checkedAt":  "2026-11-03"
                      },
     "9N4PT8HGCDHQ":  {
                          "appid":  3010850,
